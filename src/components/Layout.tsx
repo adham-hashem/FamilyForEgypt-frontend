@@ -8,6 +8,7 @@ const NAV = [
   { to: '/', label: 'الرئيسية', end: true },
   { to: '/activities', label: 'الأنشطة والفعاليات' },
   { to: '/colleges', label: 'الكليات' },
+  { to: '/about', label: 'عن الأسرة' },
   { to: '/join', label: 'انضم للأسرة' },
 ];
 

@@ -150,6 +150,9 @@ function About({ settings }: { settings: Record<string, string> }) {
         <div>
           <SectionHeading eyebrow="من نحن" title="عن الأسرة" />
           <p className="whitespace-pre-line text-lg leading-9 text-ink-700">{settings.about}</p>
+          <Link to="/about" className="mt-4 inline-flex items-center gap-1.5 font-extrabold text-brand-700 hover:underline">
+            تأسيس الأسرة وتاريخها <ArrowLeft className="size-4" />
+          </Link>
         </div>
         <div className="grid gap-4">
           {settings.vision && (

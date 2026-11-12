@@ -16,6 +16,7 @@ const PostDetail = lazy(() => import('./pages/Posts').then((m) => ({ default: m.
 const Colleges = lazy(() => import('./pages/Colleges'));
 const CollegeDetail = lazy(() => import('./pages/Colleges').then((m) => ({ default: m.CollegeDetailPage })));
 const Join = lazy(() => import('./pages/Join'));
+const About = lazy(() => import('./pages/About'));
 const ForgotPassword = lazy(() => import('./pages/Recovery').then((m) => ({ default: m.ForgotPassword })));
 const AdminAttendees = lazy(() => import('./pages/Attendance').then((m) => ({ default: m.AdminAttendees })));
 const AdminLayout = lazy(() => import('./pages/admin/AdminLayout'));
@@ -106,6 +107,7 @@ const router = createBrowserRouter([
           { path: 'activities/:id', element: <PostDetail /> },
           { path: 'colleges', element: <Colleges /> },
           { path: 'colleges/:id', element: <CollegeDetail /> },
+          { path: 'about', element: <About /> },
           { path: 'join', element: <Join /> },
           { path: 'login', element: <Login /> },
           { path: 'register', element: <Register /> },

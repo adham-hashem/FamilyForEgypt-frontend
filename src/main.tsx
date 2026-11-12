@@ -16,7 +16,7 @@ const PostDetail = lazy(() => import('./pages/Posts').then((m) => ({ default: m.
 const Colleges = lazy(() => import('./pages/Colleges'));
 const CollegeDetail = lazy(() => import('./pages/Colleges').then((m) => ({ default: m.CollegeDetailPage })));
 const Join = lazy(() => import('./pages/Join'));
-const ForgotPassword = lazy(() => import('./pages/Engagement').then((m) => ({ default: m.ForgotPassword })));
+const ForgotPassword = lazy(() => import('./pages/Recovery').then((m) => ({ default: m.ForgotPassword })));
 const AdminAttendees = lazy(() => import('./pages/Attendance').then((m) => ({ default: m.AdminAttendees })));
 const AdminLayout = lazy(() => import('./pages/admin/AdminLayout'));
 const Dashboard = lazy(() => import('./pages/admin/AdminLayout').then((m) => ({ default: m.Dashboard })));

@@ -9,7 +9,7 @@ import { useAuth } from '../lib/auth';
 import { ROLE_LABELS, STATUS_LABELS, formatDate, levelLabel } from '../lib/format';
 import type { AuthResponse, MyApplication, User, UserRole } from '../lib/types';
 import { CheckInCard } from './Attendance';
-import { VerifyEmailPanel } from './Engagement';
+import { RecoveryWordsCard, WordsSheet } from './Recovery';
 
 /** Only same-site paths are honoured, so a crafted link cannot bounce the user to another site. */
 function safeNext(value: string | null) {
@@ -78,11 +78,19 @@ export function Register() {
   const [touched, setTouched] = useState(false);
   const mutation = useMutation({
     mutationFn: () => register({ fullName: form.fullName.trim(), email: form.email.trim(), password: form.password, phone: form.phone.trim() || undefined }),
-    onSuccess: () => navigate(next, { replace: true }),
+    // With words to show, the page stays until the person has kept them.
+    onSuccess: (words) => { if (words.length === 0) navigate(next, { replace: true }); },
   });
 
   if (loading) return <PageLoader />;
   if (user && !mutation.isSuccess) return <Navigate to={next} replace />;
+  if (user && mutation.data?.length) {
+    return (
+      <AuthShell title="كلمات الاستعادة" subtitle="تم إنشاء حسابك. بقيت خطوة واحدة مهمة" footer="يمكنك لاحقاً إنشاء كلمات جديدة من صفحة حسابك.">
+        <WordsSheet words={mutation.data} email={user.email} doneLabel="متابعة" onDone={() => navigate(next, { replace: true })} />
+      </AuthShell>
+    );
+  }
 
   const errors = {
     fullName: form.fullName.trim().length < 5 ? 'اكتب الاسم كاملاً.' : '',
@@ -286,7 +294,7 @@ export function Account() {
         {forced || search.get('change') ? <ChangePassword forced={forced} /> : null}
         {!forced && (
           <>
-            <VerifyEmailPanel user={user} />
+            {!user.hasRecoveryWords && <RecoveryWordsCard user={user} />}
             {user.role === 'Student' || user.membershipStatus ? <MembershipPanel /> : null}
             <CheckInCard />
             {user.role !== 'Student' && (
@@ -300,6 +308,7 @@ export function Account() {
             )}
             <Profile user={user} />
             {!search.get('change') && <ChangePassword forced={false} />}
+            {user.hasRecoveryWords && <RecoveryWordsCard user={user} />}
           </>
         )}
         <div>

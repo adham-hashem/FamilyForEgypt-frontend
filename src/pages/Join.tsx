@@ -291,18 +291,6 @@ export default function Join() {
   else if (!user) content = <Gate />;
   else if (mine.isError) content = <div className="py-16"><ErrorState onRetry={() => void mine.refetch()} /></div>;
   else if (mine.data && (mine.data.status === 'Pending' || mine.data.status === 'Approved')) content = <StatusCard application={mine.data} />;
-  else if (user.emailVerificationRequired) {
-    content = (
-      <div className="container-page py-12">
-        <Card className="mx-auto max-w-lg p-8 text-center">
-          <span className="mx-auto flex size-14 items-center justify-center rounded-full bg-amber-50 text-amber-600"><ShieldCheck className="size-7" /></span>
-          <h2 className="mt-4 text-2xl font-black">أكّد بريدك الإلكتروني أولاً</h2>
-          <p className="mt-2 text-ink-600">أرسلنا رمزاً إلى بريدك عند إنشاء الحساب. أدخله في صفحة حسابك ثم عد لإكمال طلب الانضمام.</p>
-          <LinkButton to="/account" className="mt-6">الذهاب إلى حسابي</LinkButton>
-        </Card>
-      </div>
-    );
-  }
   else content = <JoinForm existing={mine.data ?? null} />;
 
   return (

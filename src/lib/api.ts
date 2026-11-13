@@ -1,3 +1,4 @@
+import { compressForm } from './images';
 import type { AuthResponse } from './types';
 
 const BASE = (import.meta.env.VITE_API_URL ?? '').replace(/\/$/, '');
@@ -120,6 +121,8 @@ async function send(path: string, options: RequestOptions): Promise<Response> {
 }
 
 export async function api<T = void>(path: string, options: RequestOptions = {}): Promise<T> {
+  // Photos are shrunk once here, so every upload in the site benefits and a retried request reuses them.
+  if (options.form) options = { ...options, form: await compressForm(options.form) };
   let response = await send(path, options);
 
   // An expired access token is renewed once, transparently, and the request is repeated.

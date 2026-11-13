@@ -4,12 +4,13 @@ import { useEffect, useMemo, useRef, useState, type FormEvent, type ReactNode } 
 import { PageHeader } from '../components/Layout';
 import { Alert, Button, Card, Checkbox, ErrorState, Input, LinkButton, PageLoader, Select, Textarea, cx } from '../components/ui';
 import { api, type ApiError } from '../lib/api';
+import { MAX_PICKED_IMAGE } from '../lib/images';
 import { useAuth } from '../lib/auth';
 import { COMMITTEES, GOVERNORATES, LEVELS, normalizeDigits } from '../lib/format';
 import type { College, MyApplication } from '../lib/types';
 import { myApplicationQuery } from './Auth';
 
-const MAX_IMAGE = 8 * 1024 * 1024;
+const MAX_IMAGE = MAX_PICKED_IMAGE;
 const IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
 
 export function ImagePicker({ label, hint, file, onChange, error, required, existing }: {
@@ -23,7 +24,7 @@ export function ImagePicker({ label, hint, file, onChange, error, required, exis
   const pick = (picked: File | undefined) => {
     if (!picked) return;
     if (!IMAGE_TYPES.includes(picked.type)) return setProblem('الصيغ المسموحة: JPG, PNG, WEBP.');
-    if (picked.size > MAX_IMAGE) return setProblem('حجم الصورة يجب ألا يتجاوز 8 ميجابايت.');
+    if (picked.size > MAX_IMAGE) return setProblem('حجم الصورة يجب ألا يتجاوز 25 ميجابايت.');
     setProblem('');
     onChange(picked);
   };

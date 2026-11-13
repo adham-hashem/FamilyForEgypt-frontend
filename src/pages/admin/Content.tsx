@@ -6,6 +6,7 @@ import {
   Alert, Badge, Button, Card, Checkbox, ConfirmDialog, EmptyState, ErrorState, Input, LinkButton, PageLoader, Pagination, Select, Textarea, cx, useToast,
 } from '../../components/ui';
 import { api, mediaUrl, toQuery, type ApiError } from '../../lib/api';
+import { MAX_PICKED_IMAGE } from '../../lib/images';
 import { useAuth } from '../../lib/auth';
 import {
   CATEGORY_LABELS, LEVELS, POST_TYPE_LABELS, TERMS, formatDate, formatSize, fromLocalInput, levelLabel, toLocalInput,
@@ -13,7 +14,7 @@ import {
 import type { College, Paged, PostDetail, PostImage, PostListItem, PostType, Resource, ResourceCategory, ResourceFile } from '../../lib/types';
 import { AdminTitle } from './AdminLayout';
 
-const MAX_IMAGE = 8 * 1024 * 1024;
+const MAX_IMAGE = MAX_PICKED_IMAGE;
 const MAX_DOCUMENT = 25 * 1024 * 1024;
 const IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
 const DOCUMENT_EXTENSIONS = ['.pdf', '.doc', '.docx', '.ppt', '.pptx', '.xls', '.xlsx'];
@@ -166,7 +167,7 @@ function ImagesField({ existing, setExisting, added, setAdded, max }: {
     let rejected = '';
     for (const file of Array.from(list)) {
       if (!IMAGE_TYPES.includes(file.type)) rejected = 'بعض الملفات ليست صوراً بصيغة مسموحة (JPG, PNG, WEBP).';
-      else if (file.size > MAX_IMAGE) rejected = 'بعض الصور أكبر من 8 ميجابايت.';
+      else if (file.size > MAX_IMAGE) rejected = 'بعض الصور أكبر من 25 ميجابايت.';
       else if (total + accepted.length >= max) rejected = `الحد الأقصى ${max} صورة.`;
       else accepted.push({ key: `${file.name}-${file.size}-${Math.random()}`, file, preview: URL.createObjectURL(file) });
     }
@@ -504,7 +505,7 @@ function ResourceForm({ resource }: { resource: Resource | null }) {
       const isImage = IMAGE_TYPES.includes(file.type);
       const extension = file.name.slice(file.name.lastIndexOf('.')).toLowerCase();
       if (!isImage && !DOCUMENT_EXTENSIONS.includes(extension)) rejected = 'الأنواع المسموحة: PDF, Word, PowerPoint, Excel والصور.';
-      else if (file.size > (isImage ? MAX_IMAGE : MAX_DOCUMENT)) rejected = isImage ? 'الصور حتى 8 ميجابايت.' : 'الملفات حتى 25 ميجابايت.';
+      else if (file.size > (isImage ? MAX_IMAGE : MAX_DOCUMENT)) rejected = isImage ? 'الصور حتى 25 ميجابايت.' : 'الملفات حتى 25 ميجابايت.';
       else if (kept.length + added.length + accepted.length >= 10) rejected = 'الحد الأقصى 10 ملفات.';
       else accepted.push(file);
     }

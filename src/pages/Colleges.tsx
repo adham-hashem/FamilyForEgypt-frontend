@@ -194,7 +194,7 @@ export function CollegeDetailPage() {
           )}
         </div>
         <span className="absolute end-6 top-1/2 hidden size-24 -translate-y-1/2 items-center justify-center overflow-hidden rounded-2xl bg-white p-1.5 shadow-lift sm:flex">
-          {college.logoUrl ? <img src={mediaUrl(college.logoUrl)} alt="" className="size-full object-contain" /> : <Building2 className="size-10 text-ink-400" />}
+          {college.logoUrl ? <img src={mediaUrl(college.logoThumbUrl ?? college.logoUrl)} alt="" className="size-full object-contain" /> : <Building2 className="size-10 text-ink-400" />}
         </span>
       </PageHeader>
 

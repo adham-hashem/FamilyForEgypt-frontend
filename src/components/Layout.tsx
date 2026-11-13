@@ -130,7 +130,7 @@ export function Footer() {
               <p className="text-ink-400">تم تنفيذ هذا التطبيق بواسطة</p>
               <p className="text-base font-black text-white">كلية الحاسبات والذكاء الاصطناعي</p>
               <p>
-                تحت عمادة <span className="font-bold text-gold-300">الأستاذ الدكتور/ عبد القادر عوض</span>
+                عميد الكلية <span className="font-bold text-gold-300">أ.د. وائل عبد القادر عوض</span>
               </p>
             </div>
           </div>

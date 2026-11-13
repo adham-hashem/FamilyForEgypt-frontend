@@ -12,7 +12,7 @@ export const homeQuery = { queryKey: ['home'], queryFn: () => api<HomeData>('/ap
 
 function HeroSkeleton() {
   return (
-    <div className="bg-ink-900">
+    <div className="min-h-[calc(100svh-67px)] bg-ink-900">
       <div className="container-page grid gap-8 py-14 lg:grid-cols-2">
         <div className="space-y-4">
           <div className="skeleton h-6 w-40 opacity-20" />
@@ -38,15 +38,16 @@ function Hero({ data }: { data: HomeData }) {
   ];
 
   return (
-    <section className="relative overflow-hidden bg-ink-900 text-white">
+    // Fills the first screen under the 67 px header (64 px bar + 3 px flag line).
+    <section className="relative flex min-h-[calc(100svh-67px)] flex-col overflow-hidden bg-ink-900 text-white">
       <div className="pointer-events-none absolute inset-0" aria-hidden>
         <div className="absolute -top-40 start-[-10%] size-[34rem] rounded-full bg-brand-600/30 blur-[110px]" />
         <div className="absolute bottom-[-30%] end-[-5%] size-[30rem] rounded-full bg-flame-500/20 blur-[120px]" />
         <div className="absolute inset-0 opacity-[0.07] [background-image:radial-gradient(circle_at_1px_1px,#fff_1px,transparent_0)] [background-size:28px_28px]" />
       </div>
 
-      <div className="container-page relative grid items-end gap-6 pt-10 lg:grid-cols-[1.05fr_0.95fr] lg:pt-14">
-        <div className="pb-10 text-center animate-rise lg:pb-20 lg:text-start">
+      <div className="container-page relative grid flex-1 items-end gap-6 pt-10 lg:grid-cols-[1.05fr_0.95fr] lg:pt-14">
+        <div className="pb-10 text-center animate-rise lg:self-center lg:pb-14 lg:text-start">
           <img src="/brand/logo.webp" alt="شعار أسرة طلاب من أجل مصر" width={132} height={132} className="mx-auto size-28 drop-shadow-2xl sm:size-32 lg:mx-0" fetchPriority="high" />
           <p className="mt-5 text-sm font-extrabold tracking-wide text-gold-300">جامعة دمياط</p>
           <h1 className="mt-1 text-4xl font-black leading-[1.25] sm:text-5xl lg:text-6xl lg:leading-[1.2]">
@@ -77,13 +78,13 @@ function Hero({ data }: { data: HomeData }) {
         </div>
 
         {president && (
-          <figure className="relative mx-auto w-full max-w-md animate-rise [animation-delay:120ms] lg:max-w-none">
+          <figure className="relative mx-auto w-full max-w-md animate-rise [animation-delay:120ms] lg:max-w-none lg:self-end">
             <div className="absolute inset-x-6 bottom-0 top-16 rounded-t-[3rem] bg-gradient-to-b from-brand-600/50 via-brand-800/40 to-transparent" aria-hidden />
             {president.photoUrl && (
               <img
                 src={mediaUrl(president.photoUrl)}
                 alt={president.name}
-                className="relative mx-auto max-h-[30rem] w-auto object-contain object-bottom drop-shadow-[0_20px_40px_rgba(0,0,0,0.5)]"
+                className="relative mx-auto max-h-[30rem] w-auto object-contain object-bottom drop-shadow-[0_20px_40px_rgba(0,0,0,0.5)] lg:max-h-[calc(100svh-67px-4.5rem)]"
                 fetchPriority="high"
               />
             )}

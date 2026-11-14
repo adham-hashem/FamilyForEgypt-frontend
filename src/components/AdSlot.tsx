@@ -1,5 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
-import { ExternalLink } from 'lucide-react';
+import { ArrowLeft, ExternalLink, Megaphone } from 'lucide-react';
+import { Link } from 'react-router-dom';
 import { api, mediaUrl } from '../lib/api';
 import type { Ad, AdPlacement } from '../lib/types';
 import { cx } from './ui';
@@ -58,17 +59,34 @@ export function AdSlot({ placement, index = 0, className, wide }: { placement: A
   return ad ? <AdCard ad={ad} className={className} wide={wide} /> : null;
 }
 
-/** The home page's sponsor strip: up to three ads side by side, under a small heading. */
+/**
+ * The home page's sponsor strip: up to three ads side by side, then an invitation for organisations
+ * to advertise. The invitation always shows, so the way to advertise is visible even before any ad runs.
+ */
 export function HomeAds() {
   const { data } = useAds();
   const ads = data?.filter((ad) => ad.placement === 'Home').slice(0, 3) ?? [];
-  if (ads.length === 0) return null;
   return (
     <section className="border-y border-ink-200 bg-white py-10" aria-label="إعلانات">
-      <div className="container-page">
-        <p className="mb-4 text-sm font-extrabold tracking-wide text-ink-500">شركاء وإعلانات</p>
-        <div className={cx('grid gap-4', ads.length === 1 ? '' : ads.length === 2 ? 'sm:grid-cols-2' : 'sm:grid-cols-2 lg:grid-cols-3')}>
-          {ads.map((ad) => <AdCard key={ad.id} ad={ad} wide={ads.length === 1} />)}
+      <div className="container-page grid gap-5">
+        {ads.length > 0 && (
+          <div>
+            <p className="mb-4 text-sm font-extrabold tracking-wide text-ink-500">شركاء وإعلانات</p>
+            <div className={cx('grid gap-4', ads.length === 1 ? '' : ads.length === 2 ? 'sm:grid-cols-2' : 'sm:grid-cols-2 lg:grid-cols-3')}>
+              {ads.map((ad) => <AdCard key={ad.id} ad={ad} wide={ads.length === 1} />)}
+            </div>
+          </div>
+        )}
+        <div className="relative flex flex-col items-start gap-4 overflow-hidden rounded-3xl bg-gradient-to-l from-ink-900 via-ink-800 to-brand-900 p-6 text-white shadow-lift sm:flex-row sm:items-center sm:p-8">
+          <div className="pointer-events-none absolute -start-10 -top-10 size-40 rounded-full bg-flame-500/25 blur-3xl" aria-hidden />
+          <span className="relative grid size-14 shrink-0 place-items-center rounded-2xl bg-white/10 text-gold-300"><Megaphone className="size-7" /></span>
+          <div className="relative flex-1">
+            <p className="text-xl font-black sm:text-2xl">أعلن معنا</p>
+            <p className="mt-1 leading-7 text-ink-300">شركة أو مؤسسة؟ وصّل رسالتك لطلاب جامعة دمياط: إعلانات، رعاية فعاليات ومسابقات، وعروض للطلاب.</p>
+          </div>
+          <Link to="/advertise" className="relative inline-flex h-12 shrink-0 items-center gap-2 rounded-xl bg-gradient-to-l from-flame-500 to-gold-400 px-6 font-extrabold text-ink-950 shadow-sm transition hover:brightness-105">
+            اطلب إعلانك <ArrowLeft className="size-5" />
+          </Link>
         </div>
       </div>
     </section>

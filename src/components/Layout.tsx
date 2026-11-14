@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react';
 import { Link, NavLink, Outlet, ScrollRestoration, useLocation } from 'react-router-dom';
 import { useAuth } from '../lib/auth';
 import { LinkButton, cx } from './ui';
+import { FlagName, withFlagName } from './FlagName';
 
 const NAV = [
   { to: '/', label: 'الرئيسية', end: true },
@@ -28,7 +29,7 @@ function Header() {
         <Link to="/" className="flex min-w-0 items-center gap-3" aria-label="أسرة طلاب من أجل مصر — الرئيسية">
           <img src="/brand/logo-sm.webp" alt="" width={44} height={44} className="size-11 shrink-0" />
           <span className="min-w-0 leading-tight">
-            <span className="block truncate text-base font-black">طلاب من أجل مصر</span>
+            <span className="block truncate text-base font-black">طلاب <FlagName /></span>
             <span className="block text-xs font-semibold text-gold-300">جامعة دمياط</span>
           </span>
         </Link>
@@ -104,7 +105,7 @@ export function Footer() {
           <div className="flex items-center gap-3">
             <img src="/brand/logo-sm.webp" alt="" width={56} height={56} className="size-14" loading="lazy" />
             <div>
-              <p className="text-lg font-black text-white">أسرة طلاب من أجل مصر</p>
+              <p className="text-lg font-black text-white">أسرة طلاب <FlagName /></p>
               <p className="text-sm font-semibold text-gold-300">جامعة دمياط</p>
             </div>
           </div>
@@ -138,7 +139,7 @@ export function Footer() {
       </div>
       <div className="border-t border-white/10">
         <p className="container-page py-4 text-center text-xs text-ink-500">
-          © {new Date().getFullYear()} أسرة طلاب من أجل مصر — جامعة دمياط. جميع الحقوق محفوظة.
+          © {new Date().getFullYear()} أسرة طلاب <FlagName /> — جامعة دمياط. جميع الحقوق محفوظة.
         </p>
       </div>
     </footer>
@@ -167,7 +168,7 @@ export function PageHeader({ title, subtitle, children }: { title: string; subti
       <div className="pointer-events-none absolute -top-24 start-1/2 size-96 -translate-x-1/2 rounded-full bg-brand-600/25 blur-3xl" aria-hidden />
       <div className="container-page relative py-10 sm:py-12">
         <h1 className="text-3xl font-black sm:text-4xl">{title}</h1>
-        {subtitle && <p className="mt-2 max-w-2xl text-ink-300">{subtitle}</p>}
+        {subtitle && <p className="mt-2 max-w-2xl text-ink-300">{withFlagName(subtitle)}</p>}
         {children}
       </div>
     </div>

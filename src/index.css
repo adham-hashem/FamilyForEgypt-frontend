@@ -101,7 +101,16 @@
   }
 }
 
-/* Black text that stays readable on the dark hero: a white outline drawn behind the black fill. */
+/* «من أجل مصر» in the flag's colors. White and black each get an outline of the other color, drawn behind
+   the fill, so every word stays readable on both the dark and the light parts of the site. */
+@utility text-egypt-red {
+  color: var(--color-brand-600);
+}
+@utility text-egypt-white {
+  color: #fff;
+  -webkit-text-stroke: 0.09em var(--color-ink-900);
+  paint-order: stroke fill;
+}
 @utility text-egypt-black {
   color: #000;
   -webkit-text-stroke: 0.09em #fff;

@@ -1,4 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
+import { FlagName } from '../components/FlagName';
 import { ArrowLeft, Building2, CalendarDays, Eye, Newspaper, Target, Users } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { PostGrid } from '../components/PostCard';
@@ -51,7 +52,7 @@ function Hero({ data }: { data: HomeData }) {
           <img src="/brand/logo.webp" alt="شعار أسرة طلاب من أجل مصر" width={132} height={132} className="mx-auto size-28 drop-shadow-2xl sm:size-32 lg:mx-0" fetchPriority="high" />
           <p className="mt-5 text-sm font-extrabold tracking-wide text-gold-300">جامعة دمياط</p>
           <h1 className="mt-1 text-4xl font-black leading-[1.25] sm:text-5xl lg:text-6xl lg:leading-[1.2]">
-            أسرة طلاب <span className="text-brand-600">من</span> <span className="text-white">أجل</span> <span className="text-egypt-black">مصر</span>
+            أسرة طلاب <FlagName />
           </h1>
           {data.settings.tagline && <p className="mx-auto mt-4 max-w-xl text-lg text-ink-300 lg:mx-0">{data.settings.tagline}</p>}
 

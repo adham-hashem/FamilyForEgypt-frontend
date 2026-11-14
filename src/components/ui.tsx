@@ -316,7 +316,7 @@ export const useToast = () => useContext(ToastContext);
 
 // ---------- layout helpers ----------
 
-export function SectionHeading({ eyebrow, title, action, light }: { eyebrow?: string; title: string; action?: ReactNode; light?: boolean }) {
+export function SectionHeading({ eyebrow, title, action, light }: { eyebrow?: string; title: ReactNode; action?: ReactNode; light?: boolean }) {
   return (
     <div className="mb-7 flex flex-wrap items-end justify-between gap-3">
       <div>

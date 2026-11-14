@@ -1,5 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { CheckCircle2, ExternalLink, Eye, Target } from 'lucide-react';
+import { FlagName, withFlagName } from '../components/FlagName';
 import { PageHeader } from '../components/Layout';
 import { LinkButton, SectionHeading } from '../components/ui';
 import { activities, damietta, figures, goals, intro, principles, sources, structure, timeline } from '../lib/about';
@@ -21,9 +22,9 @@ export default function About() {
       <section className="py-12">
         <div className="container-page grid gap-10 lg:grid-cols-[1.3fr_1fr] lg:items-start">
           <div>
-            <SectionHeading eyebrow="من نحن" title="أسرة طلاب من أجل مصر" />
+            <SectionHeading eyebrow="من نحن" title={<>أسرة طلاب <FlagName /></>} />
             <div className="grid gap-4 text-lg leading-9 text-ink-700">
-              {intro.map((paragraph) => <p key={paragraph}>{arabicDigits(paragraph)}</p>)}
+              {intro.map((paragraph) => <p key={paragraph}>{withFlagName(arabicDigits(paragraph))}</p>)}
             </div>
           </div>
           <dl className="grid gap-3">
@@ -46,7 +47,7 @@ export default function About() {
                 <span className="absolute -start-[calc(1.5rem+7px)] top-1.5 size-3 rounded-full bg-brand-600 ring-4 ring-white" aria-hidden />
                 <p className="text-sm font-extrabold text-brand-700">{arabicDigits(step.when)}</p>
                 <h3 className="mt-0.5 text-xl font-extrabold">{step.title}</h3>
-                <p className="mt-1 max-w-3xl leading-8 text-ink-600">{arabicDigits(step.text)}</p>
+                <p className="mt-1 max-w-3xl leading-8 text-ink-600">{withFlagName(arabicDigits(step.text))}</p>
               </li>
             ))}
           </ol>
@@ -130,7 +131,7 @@ export default function About() {
       <section className="bg-ink-900 py-12 text-white">
         <div className="container-page">
           <SectionHeading eyebrow="في جامعتنا" title="الأسرة في جامعة دمياط" light />
-          <p className="max-w-3xl text-lg leading-9 text-ink-200">{damietta.intro}</p>
+          <p className="max-w-3xl text-lg leading-9 text-ink-200">{withFlagName(damietta.intro)}</p>
           <ul className="mt-6 grid gap-3 md:grid-cols-2">
             {damietta.items.map((item) => (
               <li key={item} className="flex gap-3 rounded-2xl border border-white/10 bg-white/5 p-4 leading-8 text-ink-100">

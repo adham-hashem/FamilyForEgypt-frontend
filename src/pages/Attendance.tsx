@@ -4,6 +4,7 @@ import { ArrowRight, Camera, CameraOff, Download, Printer, QrCode, ScanLine, Use
 import QRCode from 'qrcode';
 import { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
+import { FlagName } from '../components/FlagName';
 import { Link, useParams } from 'react-router-dom';
 import { Alert, Badge, Button, Card, EmptyState, ErrorState, Input, LinkButton, PageLoader, useToast } from '../components/ui';
 import { api, type ApiError } from '../lib/api';
@@ -221,7 +222,7 @@ function BadgeSheet({ badges, post }: { badges: BadgeData[]; post: PostDetail | 
           <div className="event-badge-head">
             <img src="/brand/logo.webp" alt="" />
             <div>
-              <strong>أسرة طلاب من أجل مصر</strong>
+              <strong>أسرة طلاب <FlagName /></strong>
               <span>جامعة دمياط</span>
             </div>
           </div>

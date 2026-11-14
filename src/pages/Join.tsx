@@ -1,6 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { BadgeCheck, Clock, ImagePlus, Lock, ShieldCheck, X } from 'lucide-react';
 import { useEffect, useMemo, useRef, useState, type FormEvent, type ReactNode } from 'react';
+import { FlagName } from '../components/FlagName';
 import { PageHeader } from '../components/Layout';
 import { Alert, Button, Card, Checkbox, ErrorState, Input, LinkButton, PageLoader, Select, Textarea, cx } from '../components/ui';
 import { api, type ApiError } from '../lib/api';
@@ -271,7 +272,7 @@ function JoinForm({ existing }: { existing: MyApplication | null }) {
         <Checkbox
           checked={accept}
           onChange={(e) => setAccept(e.target.checked)}
-          label="أقرّ بأن جميع البيانات المدخلة صحيحة، وأوافق على استخدامها لأغراض عضوية أسرة طلاب من أجل مصر بجامعة دمياط."
+          label={<>أقرّ بأن جميع البيانات المدخلة صحيحة، وأوافق على استخدامها لأغراض عضوية أسرة طلاب <FlagName /> بجامعة دمياط.</>}
         />
         {show('accept') && <p role="alert" className="mt-2 text-sm font-semibold text-brand-700">{show('accept')}</p>}
         <Button type="submit" variant="gold" size="lg" loading={mutation.isPending} className="mt-5 w-full sm:w-auto">

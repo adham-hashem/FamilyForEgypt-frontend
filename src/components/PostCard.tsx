@@ -4,6 +4,7 @@ import { mediaUrl } from '../lib/api';
 import { POST_TYPE_LABELS, formatDate, formatDay, formatMonth, formatTime } from '../lib/format';
 import type { PostListItem } from '../lib/types';
 import { Badge, cx } from './ui';
+import { FlagName } from './FlagName';
 
 /** Branded placeholder so posts without photos still look intentional. */
 export function CoverFallback({ className }: { className?: string }) {
@@ -51,7 +52,7 @@ export function PostCard({ post }: { post: PostListItem }) {
       </div>
 
       <div className="flex flex-1 flex-col p-4">
-        <p className="mb-1 text-xs font-bold text-brand-600">{post.collegeName ?? 'أسرة طلاب من أجل مصر'}</p>
+        <p className="mb-1 text-xs font-bold text-brand-600">{post.collegeName ?? <>أسرة طلاب <FlagName /></>}</p>
         <h3 className="line-clamp-2 text-lg font-extrabold leading-7 text-ink-900 group-hover:text-brand-700">{post.title}</h3>
         <p className="mt-1.5 line-clamp-2 text-sm leading-6 text-ink-500">{post.summary}</p>
 

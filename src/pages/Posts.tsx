@@ -2,6 +2,7 @@ import { keepPreviousData, useQuery } from '@tanstack/react-query';
 import { ArrowRight, CalendarDays, ChevronLeft, ChevronRight, MapPin, Pencil, Search, X } from 'lucide-react';
 import { useCallback, useEffect, useState } from 'react';
 import { Link, useParams, useSearchParams } from 'react-router-dom';
+import { FlagName } from '../components/FlagName';
 import { PageHeader } from '../components/Layout';
 import { CoverFallback, PostGrid, PostGridSkeleton } from '../components/PostCard';
 import { Badge, EmptyState, ErrorState, LinkButton, PageLoader, Pagination, cx } from '../components/ui';
@@ -244,7 +245,7 @@ export function PostDetailPage() {
             {post.collegeId ? (
               <Link to={`/colleges/${post.collegeId}`} className="text-sm font-bold text-brand-700 hover:underline">{post.collegeName}</Link>
             ) : (
-              <span className="text-sm font-bold text-brand-700">أسرة طلاب من أجل مصر</span>
+              <span className="text-sm font-bold text-brand-700">أسرة طلاب <FlagName /></span>
             )}
           </div>
           <h1 className="mt-3 text-3xl font-black leading-snug sm:text-4xl">{post.title}</h1>

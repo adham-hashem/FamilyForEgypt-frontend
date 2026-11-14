@@ -89,6 +89,21 @@
   font-size: calc(1.85 * var(--u));
   font-weight: 800;
 }
+.sid-badge-row {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: calc(2 * var(--u));
+}
+.sid-badge-row .sid-badge { margin-bottom: calc(0.9 * var(--u)); }
+/* The flag of Egypt; a hairline frame keeps its white stripe visible on the white card. */
+.sid-egypt {
+  flex-shrink: 0;
+  width: calc(7.5 * var(--u));
+  height: calc(5 * var(--u));
+  border-radius: calc(0.5 * var(--u));
+  box-shadow: 0 0 0 calc(0.15 * var(--u)) rgb(20 17 15 / 0.18), 0 calc(0.3 * var(--u)) calc(0.8 * var(--u)) rgb(20 17 15 / 0.15);
+}
 .sid-field { min-width: 0; margin-bottom: calc(1.05 * var(--u)); }
 .sid-k { display: block; font-size: calc(1.7 * var(--u)); font-weight: 700; line-height: 1.3; color: #776b63; }
 .sid-v {

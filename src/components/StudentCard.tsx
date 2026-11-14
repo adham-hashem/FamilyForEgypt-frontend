@@ -27,6 +27,18 @@ export function academicYear(date = new Date()) {
 /** Long values get a smaller font instead of being cut. Based on length, so it is the same on screen and paper. */
 const fit = (text: string, fitsChars: number) => ({ '--fit': Math.max(0.62, Math.min(1, fitsChars / Math.max(1, text.length))) }) as CSSProperties;
 
+/** The flag of Egypt: red, white and black, with the golden eagle in the middle. */
+function EgyptFlag() {
+  return (
+    <svg className="sid-egypt" viewBox="0 0 30 20" role="img" aria-label="علم مصر">
+      <rect width="30" height="20" fill="#fff" />
+      <rect width="30" height="6.67" fill="#ce1126" />
+      <rect y="13.33" width="30" height="6.67" fill="#000" />
+      <path d="M15 6.7c.55 0 .9.4.9.85 0 .3-.15.55-.35.7l.25.35 2.6-1.1-.9 2.1 1.2.3-1.6 1.1.4 1.6-1.9-.6v1.3h-1.2v-1.3l-1.9.6.4-1.6-1.6-1.1 1.2-.3-.9-2.1 2.6 1.1.25-.35c-.2-.15-.35-.4-.35-.7 0-.45.35-.85.9-.85z" fill="#c09a2b" />
+    </svg>
+  );
+}
+
 function Value({ text, fitsChars }: { text: string; fitsChars: number }) {
   return <span className="sid-v" style={fit(text, fitsChars)}>{text}</span>;
 }
@@ -53,7 +65,10 @@ export function StudentIdCard({ student, photo, qr }: { student: CardStudent; ph
           <div className="sid-body">
             <img className="sid-watermark" src="/brand/logo.webp" alt="" />
             <div>
-              <span className="sid-badge">عضو الأسرة</span>
+              <div className="sid-badge-row">
+                <span className="sid-badge">عضو الأسرة</span>
+                <EgyptFlag />
+              </div>
               <div className="sid-field sid-name"><span className="sid-k">اسم الطالب</span><Value text={student.fullName} fitsChars={28} /></div>
               <div className="sid-field"><span className="sid-k">الكلية</span><Value text={student.collegeName} fitsChars={36} /></div>
               <div className="sid-pair">

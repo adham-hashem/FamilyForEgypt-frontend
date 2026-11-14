@@ -95,6 +95,35 @@ function Hero({ data }: { data: HomeData }) {
   );
 }
 
+/**
+ * A wide picture right under the opening section, uploaded from the dashboard: for example the
+ * students standing to form «من أجل مصر». It is shown whole, never cropped, because the picture is the message.
+ */
+function Banner({ settings }: { settings: Record<string, string> }) {
+  const url = settings.bannerUrl;
+  if (!url) return null;
+  const thumb = settings.bannerThumbUrl;
+  return (
+    <section className="bg-ink-950 text-white">
+      {settings.bannerTitle && (
+        <h2 className="container-page pt-8 text-center text-2xl font-black sm:text-3xl">{settings.bannerTitle}</h2>
+      )}
+      <div className={settings.bannerTitle ? 'container-page py-6' : 'container-page py-8'}>
+        <img
+          src={mediaUrl(url)}
+          srcSet={thumb ? `${mediaUrl(thumb)} 960w, ${mediaUrl(url)} 2400w` : undefined}
+          sizes="(min-width: 1280px) 1216px, 100vw"
+          alt={settings.bannerTitle || 'طلاب جامعة دمياط يكوّنون جملة «من أجل مصر»'}
+          loading="lazy"
+          decoding="async"
+          className="mx-auto h-auto w-full max-w-6xl rounded-3xl border border-white/10 shadow-lift"
+        />
+      </div>
+      <div className="h-[3px] flag-line" aria-hidden />
+    </section>
+  );
+}
+
 function VideoSection({ data }: { data: HomeData }) {
   const url = data.settings.videoUrl;
   if (!url) return null;
@@ -208,6 +237,7 @@ export default function Home() {
   return (
     <>
       <Hero data={data} />
+      <Banner settings={data.settings} />
       <VideoSection data={data} />
       {universityPresident && <UniversityPresident leader={universityPresident} />}
 

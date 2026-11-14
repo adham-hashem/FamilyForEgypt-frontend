@@ -1,10 +1,11 @@
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { Building2, Pencil, Plus, Trash2, Upload, Video } from 'lucide-react';
+import { Building2, ImageIcon, Pencil, Plus, Trash2, Upload, Video } from 'lucide-react';
 import { useRef, useState } from 'react';
 import {
   Alert, Badge, Button, Card, Checkbox, ConfirmDialog, EmptyState, ErrorState, Input, Modal, PageLoader, Pagination, Select, Textarea, cx, useToast,
 } from '../../components/ui';
 import { api, mediaUrl, toQuery, type ApiError } from '../../lib/api';
+import { MAX_PICKED_IMAGE } from '../../lib/images';
 import { useAuth } from '../../lib/auth';
 import { SLOT_LABELS, formatDateTime } from '../../lib/format';
 import type { AuditLog, College, Leader, LeaderSlot, Paged } from '../../lib/types';
@@ -126,6 +127,7 @@ const TEXT_FIELDS: Array<{ key: string; label: string; multiline?: boolean; ltr?
   { key: 'about', label: 'عن الأسرة', multiline: true },
   { key: 'vision', label: 'الرؤية', multiline: true },
   { key: 'mission', label: 'الرسالة', multiline: true },
+  { key: 'bannerTitle', label: 'عنوان الصورة العريضة (اختياري)' },
   { key: 'videoTitle', label: 'عنوان الفيديو' },
   { key: 'contactEmail', label: 'بريد التواصل', ltr: true },
   { key: 'contactPhone', label: 'هاتف التواصل', ltr: true },
@@ -148,6 +150,8 @@ export function AdminSite() {
   const [removing, setRemoving] = useState<Leader | null>(null);
   const [removingVideo, setRemovingVideo] = useState(false);
   const videoInput = useRef<HTMLInputElement>(null);
+  const [removingBanner, setRemovingBanner] = useState(false);
+  const bannerInput = useRef<HTMLInputElement>(null);
   const refresh = () => void queryClient.invalidateQueries();
 
   const saveSettings = useMutation({
@@ -184,6 +188,26 @@ export function AdminSite() {
     mutationFn: () => api('/api/admin/site/video', { method: 'DELETE' }),
     onSuccess: () => { setRemovingVideo(false); toast('تم حذف الفيديو.'); refresh(); },
   });
+
+  const uploadBanner = useMutation({
+    mutationFn: (file: File) => {
+      const body = new FormData();
+      body.append('image', file);
+      return api('/api/admin/site/banner', { method: 'POST', form: body });
+    },
+    onSuccess: () => { toast('تم رفع الصورة.'); refresh(); },
+    onError: (error) => toast((error as ApiError).message, 'error'),
+  });
+  const removeBanner = useMutation({
+    mutationFn: () => api('/api/admin/site/banner', { method: 'DELETE' }),
+    onSuccess: () => { setRemovingBanner(false); toast('تم حذف الصورة.'); refresh(); },
+  });
+  const pickBanner = (file: File | undefined) => {
+    if (!file) return;
+    if (!['image/jpeg', 'image/png', 'image/webp'].includes(file.type)) return toast('الصيغ المسموحة: JPG, PNG, WEBP.', 'error');
+    if (file.size > MAX_PICKED_IMAGE) return toast('حجم الصورة يجب ألا يتجاوز 25 ميجابايت.', 'error');
+    uploadBanner.mutate(file);
+  };
 
   if (site.isPending) return <PageLoader />;
   if (site.isError) return <ErrorState onRetry={() => void site.refetch()} />;
@@ -228,6 +252,21 @@ export function AdminSite() {
             </div>
           ))}
         </div>
+      </Card>
+
+      <Card className="mt-5 p-5 sm:p-6">
+        <h2 className="mb-1 flex items-center gap-2 text-lg font-extrabold"><ImageIcon className="size-5 text-brand-600" /> الصورة العريضة تحت أول الصفحة</h2>
+        <p className="mb-3 text-sm text-ink-600">تظهر كاملة بعرض الصفحة تحت السكشن الأول مباشرة، مثل صورة الطلاب وهم يكوّنون جملة «من أجل مصر». الأفضل صورة عرضية (مثلاً 16:9).</p>
+        {site.data.settings.bannerUrl ? (
+          <img src={mediaUrl(site.data.settings.bannerThumbUrl || site.data.settings.bannerUrl)} alt="الصورة العريضة الحالية" className="mb-3 w-full max-w-xl rounded-xl border border-ink-200" />
+        ) : (
+          <p className="mb-3 text-ink-600">لا توجد صورة حالياً، فالسكشن مخفي من الصفحة الرئيسية.</p>
+        )}
+        <div className="flex flex-wrap gap-2">
+          <Button onClick={() => bannerInput.current?.click()} loading={uploadBanner.isPending}><Upload className="size-4" /> {site.data.settings.bannerUrl ? 'استبدال الصورة' : 'رفع صورة'}</Button>
+          {site.data.settings.bannerUrl && <Button variant="danger" onClick={() => setRemovingBanner(true)}><Trash2 className="size-4" /> حذف الصورة</Button>}
+        </div>
+        <input ref={bannerInput} type="file" accept="image/jpeg,image/png,image/webp" className="sr-only" tabIndex={-1} onChange={(e) => { pickBanner(e.target.files?.[0]); e.target.value = ''; }} />
       </Card>
 
       <Card className="mt-5 p-5 sm:p-6">
@@ -282,6 +321,7 @@ export function AdminSite() {
       </Modal>
 
       <ConfirmDialog open={!!removing} title="حذف" message={`حذف «${removing?.name ?? ''}» من الصفحة الرئيسية؟`} confirmLabel="حذف" loading={removeLeader.isPending} onConfirm={() => removing && removeLeader.mutate(removing.id)} onClose={() => setRemoving(null)} />
+      <ConfirmDialog open={removingBanner} title="حذف الصورة العريضة" message="ستُحذف الصورة من الصفحة الرئيسية نهائياً." confirmLabel="حذف" loading={removeBanner.isPending} onConfirm={() => removeBanner.mutate()} onClose={() => setRemovingBanner(false)} />
       <ConfirmDialog open={removingVideo} title="حذف الفيديو" message="سيُحذف الفيديو من الصفحة الرئيسية نهائياً." confirmLabel="حذف" loading={removeVideo.isPending} onConfirm={() => removeVideo.mutate()} onClose={() => setRemovingVideo(false)} />
     </>
   );
@@ -300,7 +340,7 @@ const ACTIONS: Record<string, string> = {
   'membership.submitted': 'تقديم طلب عضوية', 'membership.resubmitted': 'إعادة تقديم طلب', 'membership.viewed': 'الاطلاع على طلب عضوية',
   'membership.approved': 'قبول طلب عضوية', 'membership.rejected': 'رفض طلب عضوية', 'membership.needschanges': 'طلب تعديل',
   'site.settings_updated': 'تعديل إعدادات الصفحة الرئيسية', 'site.leader_added': 'إضافة قيادة', 'site.leader_updated': 'تعديل قيادة',
-  'site.leader_deleted': 'حذف قيادة', 'site.video_uploaded': 'رفع فيديو', 'site.video_removed': 'حذف الفيديو',
+  'site.leader_deleted': 'حذف قيادة', 'site.video_uploaded': 'رفع فيديو', 'site.banner_uploaded': 'رفع الصورة العريضة', 'site.banner_removed': 'حذف الصورة العريضة', 'site.video_removed': 'حذف الفيديو',
 };
 
 export function AdminAudit() {

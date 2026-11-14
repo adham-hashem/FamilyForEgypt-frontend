@@ -27,16 +27,9 @@ export function academicYear(date = new Date()) {
 /** Long values get a smaller font instead of being cut. Based on length, so it is the same on screen and paper. */
 const fit = (text: string, fitsChars: number) => ({ '--fit': Math.max(0.62, Math.min(1, fitsChars / Math.max(1, text.length))) }) as CSSProperties;
 
-/** The flag of Egypt: red, white and black, with the golden eagle in the middle. */
+/** The flag of Egypt. */
 function EgyptFlag() {
-  return (
-    <svg className="sid-egypt" viewBox="0 0 30 20" role="img" aria-label="علم مصر">
-      <rect width="30" height="20" fill="#fff" />
-      <rect width="30" height="6.67" fill="#ce1126" />
-      <rect y="13.33" width="30" height="6.67" fill="#000" />
-      <path d="M15 6.7c.55 0 .9.4.9.85 0 .3-.15.55-.35.7l.25.35 2.6-1.1-.9 2.1 1.2.3-1.6 1.1.4 1.6-1.9-.6v1.3h-1.2v-1.3l-1.9.6.4-1.6-1.6-1.1 1.2-.3-.9-2.1 2.6 1.1.25-.35c-.2-.15-.35-.4-.35-.7 0-.45.35-.85.9-.85z" fill="#c09a2b" />
-    </svg>
-  );
+  return <img className="sid-egypt" src="/brand/egypt-flag.webp" alt="علم مصر" />;
 }
 
 function Value({ text, fitsChars }: { text: string; fitsChars: number }) {

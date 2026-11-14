@@ -99,6 +99,7 @@
 /* The flag of Egypt; a hairline frame keeps its white stripe visible on the white card. */
 .sid-egypt {
   flex-shrink: 0;
+  object-fit: cover;
   width: calc(7.5 * var(--u));
   height: calc(5 * var(--u));
   border-radius: calc(0.5 * var(--u));

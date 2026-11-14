@@ -1,15 +1,14 @@
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { BadgeCheck, Clock, ImagePlus, Lock, ShieldCheck, X } from 'lucide-react';
+import { useMutation, useQuery } from '@tanstack/react-query';
+import { Clock, ImagePlus, ShieldCheck, X } from 'lucide-react';
 import { useEffect, useMemo, useRef, useState, type FormEvent, type ReactNode } from 'react';
+import { Link, useLocation } from 'react-router-dom';
 import { FlagName } from '../components/FlagName';
 import { PageHeader } from '../components/Layout';
-import { Alert, Button, Card, Checkbox, ErrorState, Input, LinkButton, PageLoader, Select, Textarea, cx } from '../components/ui';
+import { Alert, Button, Card, Checkbox, ErrorState, Input, LinkButton, Select, Textarea, cx } from '../components/ui';
 import { api, type ApiError } from '../lib/api';
 import { MAX_PICKED_IMAGE } from '../lib/images';
-import { useAuth } from '../lib/auth';
 import { COMMITTEES, GOVERNORATES, LEVELS, normalizeDigits } from '../lib/format';
-import type { College, MyApplication } from '../lib/types';
-import { myApplicationQuery } from './Auth';
+import type { ApplicationStatusView, College } from '../lib/types';
 
 const MAX_IMAGE = MAX_PICKED_IMAGE;
 const IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
@@ -67,41 +66,17 @@ function Section({ step, title, children }: { step: number; title: string; child
   );
 }
 
-function Gate() {
+function SubmittedCard() {
   return (
     <div className="container-page py-12">
       <Card className="mx-auto max-w-lg p-8 text-center">
-        <span className="mx-auto flex size-14 items-center justify-center rounded-full bg-brand-50 text-brand-600"><Lock className="size-7" /></span>
-        <h2 className="mt-4 text-2xl font-black">سجّل الدخول لتبدأ</h2>
+        <span className="mx-auto flex size-14 items-center justify-center rounded-full bg-sky-50 text-sky-600"><Clock className="size-7" /></span>
+        <h2 className="mt-4 text-2xl font-black">تم استلام طلبك</h2>
         <p className="mt-2 text-ink-600">
-          نموذج الانضمام يحتوي على بيانات شخصية وصورة البطاقة، لذلك نحتاج أن يكون لك حساب لحماية بياناتك ومتابعة حالة طلبك.
-        </p>
-        <div className="mt-6 grid gap-2 sm:grid-cols-2">
-          <LinkButton to="/register?next=/join" variant="gold">إنشاء حساب جديد</LinkButton>
-          <LinkButton to="/login?next=/join" variant="outline">لدي حساب بالفعل</LinkButton>
-        </div>
-      </Card>
-    </div>
-  );
-}
-
-function StatusCard({ application }: { application: MyApplication }) {
-  const approved = application.status === 'Approved';
-  const Icon = approved ? BadgeCheck : Clock;
-  return (
-    <div className="container-page py-12">
-      <Card className="mx-auto max-w-lg p-8 text-center">
-        <span className={cx('mx-auto flex size-14 items-center justify-center rounded-full', approved ? 'bg-emerald-50 text-emerald-600' : 'bg-sky-50 text-sky-600')}>
-          <Icon className="size-7" />
-        </span>
-        <h2 className="mt-4 text-2xl font-black">{approved ? 'أنت عضو في الأسرة' : 'تم استلام طلبك'}</h2>
-        <p className="mt-2 text-ink-600">
-          {approved
-            ? `رقم عضويتك: ${application.membershipNumber}. يمكنك عرض بطاقة العضوية من حسابك.`
-            : 'طلبك قيد المراجعة من مسؤولي الأسرة في كليتك. تابع حالة الطلب من صفحة حسابك.'}
+          طلبك قيد المراجعة من مسؤولي الأسرة في كليتك. تابع حالته في أي وقت من صفحة «متابعة الطلب» برقمك القومي، ولما يتقبل هتلاقي كارنيه العضوية هناك.
         </p>
         <div className="mt-6 flex flex-wrap justify-center gap-2">
-          <LinkButton to="/account">{approved ? 'عرض بطاقة العضوية' : 'متابعة حالة الطلب'}</LinkButton>
+          <LinkButton to="/status">متابعة الطلب</LinkButton>
           <LinkButton to="/activities" variant="outline">تصفح الأنشطة</LinkButton>
         </div>
       </Card>
@@ -115,27 +90,26 @@ type FormState = {
   preferredCommittee: string; skills: string; previousActivities: string; motivation: string;
 };
 
-function JoinForm({ existing }: { existing: MyApplication | null }) {
-  const { user, reload } = useAuth();
-  const queryClient = useQueryClient();
+/** The public join form. `existing` is set when a student sends again an application that was turned back. */
+function JoinForm({ existing, onSent }: { existing: ApplicationStatusView | null; onSent: () => void }) {
   const colleges = useQuery({ queryKey: ['colleges'], queryFn: () => api<College[]>('/api/colleges'), staleTime: 300_000 });
   const [form, setForm] = useState<FormState>(() => ({
-    fullName: existing?.fullName ?? user?.fullName ?? '',
+    fullName: existing?.fullName ?? '',
     studentCode: existing?.studentCode ?? '',
     nationalId: '',
     collegeId: existing ? String(existing.collegeId) : '',
     department: existing?.department ?? '',
     level: existing ? String(existing.level) : '',
-    phone: existing?.phone ?? user?.phone ?? '',
-    whatsApp: existing?.whatsApp ?? '',
-    email: existing?.email ?? user?.email ?? '',
-    governorate: existing?.governorate ?? 'دمياط',
-    city: existing?.city ?? '',
-    address: existing?.address ?? '',
-    preferredCommittee: existing?.preferredCommittee ?? '',
-    skills: existing?.skills ?? '',
-    previousActivities: existing?.previousActivities ?? '',
-    motivation: existing?.motivation ?? '',
+    phone: '',
+    whatsApp: '',
+    email: '',
+    governorate: 'دمياط',
+    city: '',
+    address: '',
+    preferredCommittee: '',
+    skills: '',
+    previousActivities: '',
+    motivation: '',
   }));
   const [idFront, setIdFront] = useState<File | null>(null);
   const [idBack, setIdBack] = useState<File | null>(null);
@@ -175,11 +149,10 @@ function JoinForm({ existing }: { existing: MyApplication | null }) {
       if (idFront) body.append('idFront', idFront);
       if (idBack) body.append('idBack', idBack);
       if (photo) body.append('photo', photo);
-      return api<MyApplication>('/api/membership', { method: 'POST', form: body });
+      return api<ApplicationStatusView>('/api/membership', { method: 'POST', form: body });
     },
-    onSuccess: async (saved) => {
-      queryClient.setQueryData(myApplicationQuery.queryKey, saved);
-      await reload();
+    onSuccess: () => {
+      onSent();
       window.scrollTo({ top: 0, behavior: 'smooth' });
     },
     onError: () => top.current?.scrollIntoView({ behavior: 'smooth', block: 'center' }),
@@ -200,7 +173,7 @@ function JoinForm({ existing }: { existing: MyApplication | null }) {
       <div ref={top} className="grid gap-3">
         {existing && (
           <Alert tone="warning">
-            <p>{existing.status === 'Rejected' ? 'لم يُقبل طلبك السابق.' : 'مطلوب تعديل طلبك.'} عدّل البيانات ثم أعد الإرسال.</p>
+            <p>{existing.status === 'Rejected' ? 'لم يُقبل طلبك السابق.' : 'مطلوب تعديل طلبك.'} أكمل البيانات ثم أعد الإرسال. لحماية بياناتك، اكتب بيانات التواصل والعنوان من جديد.</p>
             {existing.reviewNote && <p className="mt-1 font-normal">ملاحظة المراجع: {existing.reviewNote}</p>}
           </Alert>
         )}
@@ -213,7 +186,7 @@ function JoinForm({ existing }: { existing: MyApplication | null }) {
           <Input label="الاسم رباعي" required value={form.fullName} onChange={set('fullName')} error={show('fullName')} autoComplete="name" />
         </div>
         <Input label="الرقم القومي" required dir="ltr" inputMode="numeric" value={form.nationalId} onChange={setDigits('nationalId', 14)} error={show('nationalId')}
-          hint={existing ? 'أعد كتابة الرقم القومي للتأكيد.' : 'يُستخرج منه تاريخ الميلاد والنوع تلقائياً.'} />
+          hint={existing ? 'أعد كتابة الرقم القومي للتأكيد.' : 'هو اللي هتتابع بيه طلبك وكارنيهك بعد كده، بدون حساب.'} />
         <Select label="المحافظة" required value={form.governorate} onChange={set('governorate')} error={show('governorate')}>
           {GOVERNORATES.map((g) => <option key={g}>{g}</option>)}
         </Select>
@@ -285,20 +258,24 @@ function JoinForm({ existing }: { existing: MyApplication | null }) {
 }
 
 export default function Join() {
-  const { user, loading } = useAuth();
-  const mine = useQuery({ ...myApplicationQuery, enabled: !!user });
-
-  let content: ReactNode;
-  if (loading || (user && mine.isPending)) content = <PageLoader />;
-  else if (!user) content = <Gate />;
-  else if (mine.isError) content = <div className="py-16"><ErrorState onRetry={() => void mine.refetch()} /></div>;
-  else if (mine.data && (mine.data.status === 'Pending' || mine.data.status === 'Approved')) content = <StatusCard application={mine.data} />;
-  else content = <JoinForm existing={mine.data ?? null} />;
+  // A student coming back from «متابعة الطلب» to correct a turned-back application.
+  const location = useLocation();
+  const resubmit = (location.state as { resubmit?: ApplicationStatusView } | null)?.resubmit ?? null;
+  const [sent, setSent] = useState(false);
 
   return (
     <>
-      <PageHeader title="انضم للأسرة" subtitle="سجّل بياناتك للانضمام إلى أسرة طلاب من أجل مصر بجامعة دمياط." />
-      {content}
+      <PageHeader title="انضم للأسرة" subtitle="سجّل بياناتك للانضمام إلى أسرة طلاب من أجل مصر بجامعة دمياط. لا تحتاج حساباً." />
+      {sent ? <SubmittedCard /> : (
+        <>
+          {!resubmit && (
+            <div className="container-page max-w-3xl pt-8">
+              <Alert tone="info">قدّمت قبل كده؟ تابع حالة طلبك وكارنيهك من <Link to="/status" className="font-extrabold underline">صفحة متابعة الطلب</Link>.</Alert>
+            </div>
+          )}
+          <JoinForm existing={resubmit} onSent={() => setSent(true)} />
+        </>
+      )}
     </>
   );
 }

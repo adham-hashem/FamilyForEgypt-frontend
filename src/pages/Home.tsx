@@ -5,7 +5,6 @@ import { Link } from 'react-router-dom';
 import { PostGrid } from '../components/PostCard';
 import { EmptyState, ErrorState, LinkButton, SectionHeading } from '../components/ui';
 import { api, mediaUrl } from '../lib/api';
-import { useAuth } from '../lib/auth';
 import { formatNumber } from '../lib/format';
 import type { College, HomeData, Leader } from '../lib/types';
 
@@ -29,7 +28,6 @@ function HeroSkeleton() {
 
 /** The first thing on the page: the President, beside the family's name and call to action. */
 function Hero({ data }: { data: HomeData }) {
-  const { user } = useAuth();
   const president = data.leaders.find((l) => l.slot === 'President');
   const stats = [
     { icon: Building2, value: data.stats.colleges, label: 'كلية' },
@@ -57,11 +55,7 @@ function Hero({ data }: { data: HomeData }) {
           {data.settings.tagline && <p className="mx-auto mt-4 max-w-xl text-lg text-ink-300 lg:mx-0">{data.settings.tagline}</p>}
 
           <div className="mt-7 flex flex-wrap justify-center gap-3 lg:justify-start">
-            {user?.membershipStatus === 'Approved' ? (
-              <LinkButton to="/account" variant="gold" size="lg">بطاقة عضويتي</LinkButton>
-            ) : (
-              <LinkButton to="/join" variant="gold" size="lg">انضم للأسرة الآن <ArrowLeft className="size-5" /></LinkButton>
-            )}
+            <LinkButton to="/join" variant="gold" size="lg">انضم للأسرة الآن <ArrowLeft className="size-5" /></LinkButton>
             <LinkButton to="/activities" variant="outline" size="lg" className="!border-white/25 !bg-white/5 !text-white hover:!bg-white/15">
               تصفح الأنشطة
             </LinkButton>

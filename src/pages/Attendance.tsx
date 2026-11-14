@@ -1,132 +1,16 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import jsQR from 'jsqr';
-import { ArrowRight, Camera, CameraOff, Download, Printer, QrCode, ScanLine, UserCheck } from 'lucide-react';
-import QRCode from 'qrcode';
+import { ArrowRight, Camera, CameraOff, Printer, ScanLine, UserCheck } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { FlagName } from '../components/FlagName';
 import { Link, useParams } from 'react-router-dom';
-import { Alert, Badge, Button, Card, EmptyState, ErrorState, Input, LinkButton, PageLoader, useToast } from '../components/ui';
+import { Alert, Badge, Button, Card, EmptyState, ErrorState, Input, LinkButton, PageLoader } from '../components/ui';
 import { api, type ApiError } from '../lib/api';
-import { useAuth } from '../lib/auth';
 import { formatDateTime, formatNumber, formatTime } from '../lib/format';
 import type { Attendees, CheckInResult, PostDetail } from '../lib/types';
 import { AdminTitle } from './admin/AdminLayout';
 
-const FONT = '"Cairo Variable", "Cairo", sans-serif';
-
-// ---------- the personal check-in QR ----------
-
-function loadImage(src: string) {
-  return new Promise<HTMLImageElement | null>((resolve) => {
-    const image = new Image();
-    image.onload = () => resolve(image);
-    image.onerror = () => resolve(null);
-    image.src = src;
-  });
-}
-
-/** Draws the card that is saved to the phone or computer: the family's name, the owner's name and the QR. */
-async function drawCard(code: string, fullName: string) {
-  const width = 900;
-  const height = 1240;
-  const canvas = document.createElement('canvas');
-  canvas.width = width;
-  canvas.height = height;
-  const ctx = canvas.getContext('2d')!;
-  await Promise.all([document.fonts.load(`900 40px ${FONT}`), document.fonts.load(`700 40px ${FONT}`)]).catch(() => undefined);
-
-  ctx.fillStyle = '#ffffff';
-  ctx.fillRect(0, 0, width, height);
-  ctx.fillStyle = '#14110f';
-  ctx.fillRect(0, 0, width, 250);
-  ctx.fillStyle = '#c8102e';
-  ctx.fillRect(0, 250, width, 12);
-
-  const logo = await loadImage('/brand/logo.webp');
-  if (logo) ctx.drawImage(logo, width / 2 - 65, 22, 130, 130);
-
-  ctx.direction = 'rtl';
-  ctx.textAlign = 'center';
-  ctx.fillStyle = '#ffffff';
-  ctx.font = `900 40px ${FONT}`;
-  ctx.fillText('أسرة طلاب من أجل مصر — جامعة دمياط', width / 2, 215);
-
-  ctx.fillStyle = '#6b6560';
-  ctx.font = `700 30px ${FONT}`;
-  ctx.fillText('رمز الحضور', width / 2, 330);
-  ctx.fillStyle = '#14110f';
-  ctx.font = `900 50px ${FONT}`;
-  ctx.fillText(fullName, width / 2, 400, width - 80);
-
-  const qr = document.createElement('canvas');
-  await QRCode.toCanvas(qr, code, { width: 640, margin: 2, errorCorrectionLevel: 'M' });
-  ctx.drawImage(qr, (width - 640) / 2, 450);
-
-  ctx.fillStyle = '#6b6560';
-  ctx.font = `700 28px ${FONT}`;
-  ctx.fillText('أظهر هذا الرمز لمنظّم الفعالية عند الدخول', width / 2, 1150);
-  ctx.fillText('الرمز خاص بك فلا تشاركه', width / 2, 1195);
-  return canvas;
-}
-
-export function CheckInCard() {
-  const { user } = useAuth();
-  const toast = useToast();
-  const canvas = useRef<HTMLCanvasElement>(null);
-  const [saving, setSaving] = useState(false);
-  const { data, isError } = useQuery({
-    queryKey: ['checkin-code'], queryFn: () => api<{ code: string }>('/api/auth/checkin-code'), staleTime: Infinity,
-  });
-
-  useEffect(() => {
-    if (data && canvas.current) void QRCode.toCanvas(canvas.current, data.code, { width: 200, margin: 1, errorCorrectionLevel: 'M' });
-  }, [data]);
-
-  const download = async () => {
-    if (!data || !user) return;
-    setSaving(true);
-    try {
-      const card = await drawCard(data.code, user.fullName);
-      const blob = await new Promise<Blob | null>((resolve) => card.toBlob(resolve, 'image/png'));
-      if (!blob) throw new Error('empty');
-      const url = URL.createObjectURL(blob);
-      const link = document.createElement('a');
-      link.href = url;
-      link.download = 'attendance-code.png';
-      document.body.appendChild(link);
-      link.click();
-      link.remove();
-      setTimeout(() => URL.revokeObjectURL(url), 2000);
-      toast('تم تنزيل الرمز. احتفظ بالصورة على هاتفك.');
-    } catch {
-      toast('تعذر تنزيل الرمز. حاول مرة أخرى.', 'error');
-    } finally {
-      setSaving(false);
-    }
-  };
-
-  if (isError) return null;
-  return (
-    <Card className="flex flex-wrap items-center gap-5 p-6">
-      <div className="rounded-2xl border border-ink-200 bg-white p-2">
-        {data ? <canvas ref={canvas} aria-label="رمز الحضور" className="size-[200px]" /> : <div className="skeleton size-[200px]" />}
-      </div>
-      <div className="min-w-48 flex-1">
-        <h2 className="flex items-center gap-2 text-lg font-extrabold"><QrCode className="size-5 text-brand-600" /> رمز الحضور</h2>
-        <p className="mt-1 text-ink-600">
-          أظهر هذا الرمز لمنظّم الفعالية عند الدخول ليُسجَّل حضورك ويُطبع كارنيه الفعالية باسمك.
-          الرمز ثابت لحسابك، فنزّله واحتفظ به على هاتفك ليعمل حتى بدون إنترنت. لا تشاركه مع أحد.
-        </p>
-        <div className="mt-3">
-          <Button variant="outline" size="sm" loading={saving} disabled={!data} onClick={() => void download()}>
-            <Download className="size-4" /> تنزيل الرمز كصورة
-          </Button>
-        </div>
-      </div>
-    </Card>
-  );
-}
 
 // ---------- reading a QR with the computer's camera ----------
 
@@ -203,7 +87,7 @@ function QrScanner({ onCode }: { onCode: (code: string) => void }) {
 // ---------- the printed event badge ----------
 
 interface BadgeData {
-  userId: string;
+  memberId: number;
   fullName: string;
   collegeName: string | null;
   membershipNumber: string | null;
@@ -218,7 +102,7 @@ function BadgeSheet({ badges, post }: { badges: BadgeData[]; post: PostDetail | 
   return createPortal(
     <div className="print-root" dir="rtl">
       {badges.map((badge) => (
-        <div className="event-badge" key={badge.userId}>
+        <div className="event-badge" key={badge.memberId}>
           <div className="event-badge-head">
             <img src="/brand/logo.webp" alt="" />
             <div>
@@ -262,7 +146,6 @@ const readAutoPrint = () => {
 export function AdminAttendees() {
   const { id } = useParams();
   const queryClient = useQueryClient();
-  const toast = useToast();
   const [code, setCode] = useState('');
   const [camera, setCamera] = useState(false);
   const [autoPrint, setAutoPrint] = useState(readAutoPrint);
@@ -288,16 +171,6 @@ export function AdminAttendees() {
       if (autoPrint && !result.alreadyCheckedIn) setPrinting([result]);
     },
     onSettled: () => setTimeout(() => { busy.current = false; }, 1800),
-  });
-  const manual = useMutation({
-    mutationFn: (userId: string) => api<CheckInResult>(`/api/admin/posts/${id}/attendees/${userId}/check-in`, { method: 'POST' }),
-    onSuccess: (result) => {
-      toast(`تم تسجيل حضور ${result.fullName}.`);
-      setLast(result);
-      refresh();
-      if (autoPrint && !result.alreadyCheckedIn) setPrinting([result]);
-    },
-    onError: (error) => toast((error as ApiError).message, 'error'),
   });
 
   // Printing starts once the badges are on the page, and they are removed again when the dialog closes.
@@ -339,7 +212,7 @@ export function AdminAttendees() {
       <AdminTitle title="الحضور والكارنيهات" subtitle={post.data?.title} />
 
       <div className="grid grid-cols-2 gap-3">
-        <Card className="p-4"><p className="text-3xl font-black">{formatNumber(data.total)}</p><p className="text-sm font-bold text-ink-500">سجّلوا «سأحضر»</p></Card>
+        <Card className="p-4"><p className="text-3xl font-black">{formatNumber(data.total)}</p><p className="text-sm font-bold text-ink-500">في القائمة</p></Card>
         <Card className="p-4"><p className="text-3xl font-black text-emerald-600">{formatNumber(data.checkedIn)}</p><p className="text-sm font-bold text-ink-500">حضروا فعلياً</p></Card>
       </div>
 
@@ -351,8 +224,8 @@ export function AdminAttendees() {
           </Button>
         </div>
         <p className="mt-1 text-sm text-ink-600">
-          وجّه رمز الطالب (من هاتفه أو مطبوعاً) إلى الكاميرا، فيُسجَّل حضوره ويجهز كارنيه الفعالية للطباعة.
-          يمكن أيضاً المسح من تطبيق الموبايل، أو بقارئ QR موصّل بالكمبيوتر والمؤشر داخل الخانة.
+          وجّه الكود اللي على ظهر كارنيه العضوية (مطبوعاً أو على هاتف العضو) إلى الكاميرا، فيُسجَّل حضوره ويجهز كارنيه الفعالية للطباعة.
+          لو الكارنيه مش معاه اكتب رقم العضوية. يمكن أيضاً المسح من تطبيق الموبايل، أو بقارئ QR موصّل بالكمبيوتر والمؤشر داخل الخانة.
         </p>
 
         {camera && (
@@ -367,7 +240,7 @@ export function AdminAttendees() {
 
         <form className="mt-3 flex flex-wrap items-end gap-2" onSubmit={(e) => { e.preventDefault(); if (code.trim()) scan.mutate(code); }}>
           <div className="min-w-56 flex-1">
-            <Input label="الرمز" dir="ltr" autoFocus={!camera} value={code} onChange={(e) => setCode(e.target.value)} placeholder="FFE1.…" />
+            <Input label="الكود أو رقم العضوية" dir="ltr" autoFocus={!camera} value={code} onChange={(e) => setCode(e.target.value)} placeholder="DU-2026-00001" />
           </div>
           <Button type="submit" variant="outline" loading={scan.isPending && !camera} disabled={!code.trim()}>تسجيل الحضور</Button>
         </form>
@@ -405,11 +278,11 @@ export function AdminAttendees() {
         )}
       </div>
       {data.items.length === 0 ? (
-        <EmptyState title="لم يسجّل أحد حضوره بعد" text="سيظهر هنا كل من يضغط «سأحضر» أو يُسجَّل حضوره عند الدخول." />
+        <EmptyState title="لم يسجّل أحد حضوره بعد" text="سيظهر هنا كل عضو يُمسح كارنيهه عند الدخول." />
       ) : (
         <div className="grid gap-2">
           {data.items.map((item) => (
-            <Card key={item.userId} className="flex flex-wrap items-center gap-3 p-3.5">
+            <Card key={item.memberId} className="flex flex-wrap items-center gap-3 p-3.5">
               <div className="min-w-0 flex-1">
                 <p className="truncate font-extrabold">{item.fullName}</p>
                 <p className="text-xs font-semibold text-ink-500">
@@ -417,15 +290,13 @@ export function AdminAttendees() {
                   {item.membershipNumber ? <span dir="ltr">{item.membershipNumber}</span> : 'ليس عضواً'}
                 </p>
               </div>
-              {item.checkedInAt && item.badgeNumber !== null ? (
+              {item.checkedInAt && item.badgeNumber !== null && (
                 <>
                   <Badge tone="green"><UserCheck className="size-3.5" /> حضر {formatTime(item.checkedInAt)}</Badge>
                   <Button variant="ghost" size="sm" aria-label={`طباعة كارنيه ${item.fullName}`} onClick={() => setPrinting([{ ...item, badgeNumber: item.badgeNumber! }])}>
                     <Printer className="size-4" /> كارنيه <span dir="ltr">#{item.badgeNumber}</span>
                   </Button>
                 </>
-              ) : (
-                <Button variant="outline" size="sm" loading={manual.isPending && manual.variables === item.userId} onClick={() => manual.mutate(item.userId)}>تسجيل حضوره</Button>
               )}
             </Card>
           ))}

@@ -55,8 +55,7 @@ function Header() {
             </>
           ) : (
             <>
-              <LinkButton to="/login" variant="ghost" size="sm" className="!text-white hover:!bg-white/10">تسجيل الدخول</LinkButton>
-              <LinkButton to="/register" variant="primary" size="sm">حساب جديد</LinkButton>
+              <LinkButton to="/status" variant="primary" size="sm">متابعة طلبي</LinkButton>
             </>
           )}
         </div>
@@ -84,8 +83,8 @@ function Header() {
               </>
             ) : (
               <div className="grid grid-cols-2 gap-2 pt-1">
-                <LinkButton to="/login" variant="outline" size="sm">تسجيل الدخول</LinkButton>
-                <LinkButton to="/register" variant="primary" size="sm">حساب جديد</LinkButton>
+                <LinkButton to="/status" variant="primary" size="sm">متابعة طلبي</LinkButton>
+                <LinkButton to="/login" variant="outline" size="sm">دخول المسؤولين</LinkButton>
               </div>
             )}
           </nav>
@@ -120,7 +119,8 @@ export function Footer() {
             {NAV.map((item) => (
               <li key={item.to}><Link to={item.to} className="hover:text-white">{item.label}</Link></li>
             ))}
-            <li><Link to="/account" className="hover:text-white">حسابي</Link></li>
+            <li><Link to="/status" className="hover:text-white">متابعة طلب الانضمام</Link></li>
+            <li><Link to="/login" className="hover:text-white">دخول المسؤولين</Link></li>
           </ul>
         </nav>
 

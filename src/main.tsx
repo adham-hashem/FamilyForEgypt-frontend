@@ -1,13 +1,13 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { StrictMode, Suspense, lazy } from 'react';
 import { createRoot } from 'react-dom/client';
-import { Outlet, RouterProvider, createBrowserRouter, useRouteError } from 'react-router-dom';
+import { Navigate, Outlet, RouterProvider, createBrowserRouter, useRouteError } from 'react-router-dom';
 import { SiteLayout } from './components/Layout';
 import { EmptyState, LinkButton, PageLoader, ToastProvider } from './components/ui';
 import './index.css';
 import type { ApiError } from './lib/api';
 import { AuthProvider } from './lib/auth';
-import { Account, Login, Register, RequireAuth } from './pages/Auth';
+import { Account, Login, RequireAuth } from './pages/Auth';
 import Home from './pages/Home';
 
 // Everything beyond the home page is loaded on demand, so the first visit stays light.
@@ -16,6 +16,7 @@ const PostDetail = lazy(() => import('./pages/Posts').then((m) => ({ default: m.
 const Colleges = lazy(() => import('./pages/Colleges'));
 const CollegeDetail = lazy(() => import('./pages/Colleges').then((m) => ({ default: m.CollegeDetailPage })));
 const Join = lazy(() => import('./pages/Join'));
+const Status = lazy(() => import('./pages/Status'));
 const About = lazy(() => import('./pages/About'));
 const ForgotPassword = lazy(() => import('./pages/Recovery').then((m) => ({ default: m.ForgotPassword })));
 const AdminAttendees = lazy(() => import('./pages/Attendance').then((m) => ({ default: m.AdminAttendees })));
@@ -110,7 +111,9 @@ const router = createBrowserRouter([
           { path: 'about', element: <About /> },
           { path: 'join', element: <Join /> },
           { path: 'login', element: <Login /> },
-          { path: 'register', element: <Register /> },
+          { path: 'status', element: <Status /> },
+          // Student accounts are gone; old links to the sign-up page lead to the join form.
+          { path: 'register', element: <Navigate to="/join" replace /> },
           { path: 'forgot-password', element: <ForgotPassword /> },
           { path: 'account', element: <RequireAuth><Account /></RequireAuth> },
           {

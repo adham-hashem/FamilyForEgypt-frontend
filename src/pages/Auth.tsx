@@ -1,16 +1,14 @@
-import { useMutation, useQuery } from '@tanstack/react-query';
-import { BadgeCheck, Clock, KeyRound, LogOut, ShieldCheck, TriangleAlert, XCircle } from 'lucide-react';
+import { useMutation } from '@tanstack/react-query';
+import { KeyRound, LogOut, ShieldCheck } from 'lucide-react';
 import { useState, type FormEvent, type ReactNode } from 'react';
 import { Link, Navigate, useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import { PageHeader } from '../components/Layout';
-import { StudentCardPanel } from '../components/StudentCard';
 import { Alert, Button, Card, Input, LinkButton, PageLoader, useToast } from '../components/ui';
 import { api, type ApiError } from '../lib/api';
 import { useAuth } from '../lib/auth';
-import { ROLE_LABELS, STATUS_LABELS, formatDate } from '../lib/format';
-import type { AuthResponse, MyApplication, User, UserRole } from '../lib/types';
-import { CheckInCard } from './Attendance';
-import { RecoveryWordsCard, WordsSheet } from './Recovery';
+import { ROLE_LABELS } from '../lib/format';
+import type { AuthResponse, User, UserRole } from '../lib/types';
+import { RecoveryWordsCard } from './Recovery';
 
 /** Only same-site paths are honoured, so a crafted link cannot bounce the user to another site. */
 function safeNext(value: string | null) {
@@ -55,9 +53,9 @@ export function Login() {
 
   return (
     <AuthShell
-      title="تسجيل الدخول"
-      subtitle="مرحباً بعودتك"
-      footer={<>ليس لديك حساب؟ <Link to={`/register?next=${encodeURIComponent(next)}`} className="font-extrabold text-brand-700 hover:underline">أنشئ حساباً جديداً</Link></>}
+      title="دخول مسؤولي الأسرة"
+      subtitle="الحسابات لمسؤولي الأسرة ورواد الكليات فقط."
+      footer={<>طالب؟ مش محتاج حساب. <Link to="/join" className="font-extrabold text-brand-700 hover:underline">قدّم طلب انضمام</Link> أو <Link to="/status" className="font-extrabold text-brand-700 hover:underline">تابع طلبك برقمك القومي</Link>.</>}
     >
       <form onSubmit={submit} className="grid gap-4" noValidate>
         {mutation.error && <Alert>{(mutation.error as ApiError).message}</Alert>}
@@ -65,65 +63,6 @@ export function Login() {
         <Input label="كلمة المرور" type="password" dir="ltr" autoComplete="current-password" required value={password} onChange={(e) => setPassword(e.target.value)} />
         <Link to="/forgot-password" className="-mt-1 justify-self-start text-sm font-bold text-brand-700 hover:underline">نسيت كلمة المرور؟</Link>
         <Button type="submit" size="lg" loading={mutation.isPending} disabled={!email || !password}>دخول</Button>
-      </form>
-    </AuthShell>
-  );
-}
-
-export function Register() {
-  const { user, register, loading } = useAuth();
-  const [search] = useSearchParams();
-  const next = safeNext(search.get('next'));
-  const navigate = useNavigate();
-  const [form, setForm] = useState({ fullName: '', email: '', phone: '', password: '', confirm: '' });
-  const [touched, setTouched] = useState(false);
-  const mutation = useMutation({
-    mutationFn: () => register({ fullName: form.fullName.trim(), email: form.email.trim(), password: form.password, phone: form.phone.trim() || undefined }),
-    // With words to show, the page stays until the person has kept them.
-    onSuccess: (words) => { if (words.length === 0) navigate(next, { replace: true }); },
-  });
-
-  if (loading) return <PageLoader />;
-  if (user && !mutation.isSuccess) return <Navigate to={next} replace />;
-  if (user && mutation.data?.length) {
-    return (
-      <AuthShell title="كلمات الاستعادة" subtitle="تم إنشاء حسابك. بقيت خطوة واحدة مهمة" footer="يمكنك لاحقاً إنشاء كلمات جديدة من صفحة حسابك.">
-        <WordsSheet words={mutation.data} email={user.email} doneLabel="متابعة" onDone={() => navigate(next, { replace: true })} />
-      </AuthShell>
-    );
-  }
-
-  const errors = {
-    fullName: form.fullName.trim().length < 5 ? 'اكتب الاسم كاملاً.' : '',
-    email: /^\S+@\S+\.\S+$/.test(form.email.trim()) ? '' : 'البريد الإلكتروني غير صحيح.',
-    phone: form.phone && !/^01[0125]\d{8}$/.test(form.phone.trim()) ? 'رقم الموبايل غير صحيح. مثال: 01012345678' : '',
-    password: form.password.length >= 8 && /\p{L}/u.test(form.password) && /\d/.test(form.password) ? '' : '8 أحرف على الأقل، وتحتوي على حروف وأرقام.',
-    confirm: form.confirm === form.password ? '' : 'كلمتا المرور غير متطابقتين.',
-  };
-  const valid = Object.values(errors).every((e) => !e);
-  const set = (key: keyof typeof form) => (e: React.ChangeEvent<HTMLInputElement>) => setForm((f) => ({ ...f, [key]: e.target.value }));
-  const show = (key: keyof typeof errors) => (touched ? errors[key] : '');
-
-  const submit = (event: FormEvent) => {
-    event.preventDefault();
-    setTouched(true);
-    if (valid) mutation.mutate();
-  };
-
-  return (
-    <AuthShell
-      title="حساب جديد"
-      subtitle="أنشئ حسابك لتتمكن من الانضمام للأسرة ومتابعة طلبك"
-      footer={<>لديك حساب بالفعل؟ <Link to={`/login?next=${encodeURIComponent(next)}`} className="font-extrabold text-brand-700 hover:underline">سجّل الدخول</Link></>}
-    >
-      <form onSubmit={submit} className="grid gap-4" noValidate>
-        {mutation.error && <Alert>{(mutation.error as ApiError).message}</Alert>}
-        <Input label="الاسم بالكامل" autoComplete="name" required value={form.fullName} onChange={set('fullName')} error={show('fullName')} />
-        <Input label="البريد الإلكتروني" type="email" dir="ltr" autoComplete="email" required value={form.email} onChange={set('email')} error={show('email')} />
-        <Input label="رقم الموبايل" type="tel" dir="ltr" inputMode="numeric" autoComplete="tel" value={form.phone} onChange={set('phone')} error={show('phone')} hint="اختياري" />
-        <Input label="كلمة المرور" type="password" dir="ltr" autoComplete="new-password" required value={form.password} onChange={set('password')} error={show('password')} hint="8 أحرف على الأقل، وتحتوي على حروف وأرقام." />
-        <Input label="تأكيد كلمة المرور" type="password" dir="ltr" autoComplete="new-password" required value={form.confirm} onChange={set('confirm')} error={show('confirm')} />
-        <Button type="submit" size="lg" loading={mutation.isPending}>إنشاء الحساب</Button>
       </form>
     </AuthShell>
   );
@@ -149,64 +88,6 @@ export function RequireAuth({ children, minimum }: { children: ReactNode; minimu
     );
   }
   return <>{children}</>;
-}
-
-export const myApplicationQuery = {
-  queryKey: ['membership', 'mine'],
-  queryFn: async () => (await api<MyApplication | undefined>('/api/membership/mine')) ?? null,
-};
-
-function MembershipPanel() {
-  const { data, isPending } = useQuery(myApplicationQuery);
-  if (isPending) return <div className="skeleton h-40" />;
-
-  if (!data) {
-    return (
-      <Card className="p-6">
-        <h2 className="text-lg font-extrabold">عضوية الأسرة</h2>
-        <p className="mt-1 text-ink-600">لم تقدّم طلب انضمام بعد. التسجيل يستغرق دقائق قليلة.</p>
-        <LinkButton to="/join" variant="gold" className="mt-4">انضم للأسرة</LinkButton>
-      </Card>
-    );
-  }
-
-  if (data.status === 'Approved') {
-    return (
-      <Card className="p-5 sm:p-6">
-        <div className="mb-5">
-          <h2 className="flex items-center gap-2 text-lg font-extrabold"><BadgeCheck className="size-5 text-emerald-600" /> كارنيه العضوية</h2>
-          <p className="mt-1 text-sm text-ink-600">الكود اللي على ظهر الكارنيه هو نفس كود الحضور، فالكارنيه المطبوع ينفع للتسجيل في الفعاليات.</p>
-        </div>
-        <StudentCardPanel
-          student={data}
-          photoPath={data.hasPhoto ? '/api/membership/mine/files/photo' : null}
-          codePath="/api/auth/checkin-code"
-        />
-      </Card>
-    );
-  }
-
-  const meta = {
-    Pending: { icon: Clock, tone: 'info' as const, text: 'طلبك قيد المراجعة من مسؤولي الأسرة. ستظهر النتيجة هنا.' },
-    NeedsChanges: { icon: TriangleAlert, tone: 'warning' as const, text: 'مطلوب تعديل بعض البيانات ثم إعادة الإرسال.' },
-    Rejected: { icon: XCircle, tone: 'error' as const, text: 'لم يتم قبول الطلب. يمكنك تعديل البيانات وإعادة التقديم.' },
-  }[data.status];
-
-  return (
-    <Card className="p-6">
-      <div className="flex flex-wrap items-center justify-between gap-2">
-        <h2 className="text-lg font-extrabold">طلب الانضمام</h2>
-        <span className="text-sm font-semibold text-ink-500">آخر تحديث: {formatDate(data.updatedAt)}</span>
-      </div>
-      <div className="mt-3">
-        <Alert tone={meta.tone}>
-          <p>{STATUS_LABELS[data.status]} — {meta.text}</p>
-          {data.reviewNote && <p className="mt-1 font-normal">ملاحظة المراجع: {data.reviewNote}</p>}
-        </Alert>
-      </div>
-      {data.status !== 'Pending' && <LinkButton to="/join" className="mt-4">تعديل البيانات وإعادة الإرسال</LinkButton>}
-    </Card>
-  );
 }
 
 function ChangePassword({ forced }: { forced: boolean }) {
@@ -285,8 +166,6 @@ export function Account() {
         {!forced && (
           <>
             {!user.hasRecoveryWords && <RecoveryWordsCard user={user} />}
-            {user.role === 'Student' || user.membershipStatus ? <MembershipPanel /> : null}
-            <CheckInCard />
             {user.role !== 'Student' && (
               <Card className="flex flex-wrap items-center justify-between gap-3 p-6">
                 <div>

@@ -136,14 +136,48 @@ export interface HomeData {
   colleges: College[];
 }
 
-export interface MyApplication {
+/** What a student sees after entering their national ID. Contact details and the address are left out. */
+export interface ApplicationStatusView {
+  status: ApplicationStatus;
+  reviewNote: string | null;
+  membershipNumber: string | null;
+  fullName: string;
+  studentCode: string;
+  collegeId: number;
+  collegeName: string;
+  department: string | null;
+  level: number;
+  hasPhoto: boolean;
+  createdAt: string;
+  updatedAt: string;
+  reviewedAt: string | null;
+  /** The check-in code for the QR on the card; members only. */
+  memberCode: string | null;
+  /** Opens the student's photo for about half an hour. */
+  photoToken: string | null;
+}
+
+export interface ApplicationListItem {
+  id: number;
+  fullName: string;
+  studentCode: string;
+  collegeId: number;
+  collegeName: string;
+  level: number;
+  phone: string;
+  status: ApplicationStatus;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface ApplicationDetail {
   id: number;
   status: ApplicationStatus;
   reviewNote: string | null;
   membershipNumber: string | null;
   fullName: string;
   studentCode: string;
-  nationalIdMasked: string;
+  nationalId: string | null;
   collegeId: number;
   collegeName: string;
   department: string | null;
@@ -164,25 +198,9 @@ export interface MyApplication {
   createdAt: string;
   updatedAt: string;
   reviewedAt: string | null;
-}
-
-export interface ApplicationListItem {
-  id: number;
-  fullName: string;
-  studentCode: string;
-  collegeId: number;
-  collegeName: string;
-  level: number;
-  phone: string;
-  status: ApplicationStatus;
-  createdAt: string;
-  updatedAt: string;
-}
-
-export interface ApplicationDetail extends Omit<MyApplication, 'nationalIdMasked'> {
-  nationalId: string | null;
   reviewedByName: string | null;
-  accountEmail: string;
+  /** Only applications sent from an old student account have one. */
+  accountEmail: string | null;
 }
 
 export interface AdminUser {
@@ -229,7 +247,7 @@ export interface AttendanceState {
 }
 
 export interface Attendee {
-  userId: string;
+  memberId: number;
   fullName: string;
   membershipNumber: string | null;
   collegeName: string | null;
@@ -246,7 +264,7 @@ export interface Attendees {
 }
 
 export interface CheckInResult {
-  userId: string;
+  memberId: number;
   fullName: string;
   membershipNumber: string | null;
   collegeName: string | null;

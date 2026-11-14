@@ -10,7 +10,6 @@ interface AuthState {
   loading: boolean;
   login(email: string, password: string): Promise<User>;
   /** Resolves to the new account's recovery words, which are shown once. */
-  register(input: { fullName: string; email: string; password: string; phone?: string }): Promise<string[]>;
   logout(): Promise<void>;
   /** Stores a new token pair (after a password change) or refreshes the profile. */
   accept(auth: AuthResponse): void;
@@ -41,12 +40,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return auth.user;
   }, [accept]);
 
-  const register = useCallback(async (input: { fullName: string; email: string; password: string; phone?: string }) => {
-    const auth = await api<AuthResponse>('/api/auth/register', { method: 'POST', body: input });
-    accept(auth);
-    return auth.recoveryWords ?? [];
-  }, [accept]);
-
   const logout = useCallback(async () => {
     try {
       await api('/api/auth/logout', { method: 'POST', body: {} });
@@ -63,9 +56,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const value = useMemo<AuthState>(() => ({
-    user, loading, login, register, logout, accept, reload,
+    user, loading, login, logout, accept, reload,
     hasRole: (minimum) => !!user && ROLE_RANK[user.role] >= ROLE_RANK[minimum],
-  }), [user, loading, login, register, logout, accept, reload]);
+  }), [user, loading, login, logout, accept, reload]);
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }

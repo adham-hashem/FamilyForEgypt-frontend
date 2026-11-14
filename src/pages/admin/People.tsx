@@ -1,5 +1,5 @@
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { ArrowRight, Copy, KeyRound, Plus, Search, ShieldCheck, UserCog, UserX } from 'lucide-react';
+import { ArrowRight, Copy, KeyRound, Pencil, Plus, Search, ShieldCheck, UserCog, UserX } from 'lucide-react';
 import { useEffect, useState, type FormEvent, type ReactNode } from 'react';
 import { Link, useParams, useSearchParams } from 'react-router-dom';
 import {
@@ -8,7 +8,7 @@ import {
 import { api, fetchBlobUrl, toQuery, type ApiError } from '../../lib/api';
 import { useAuth } from '../../lib/auth';
 import { StudentCardPanel } from '../../components/StudentCard';
-import { ROLE_HINTS, ROLE_LABELS, STATUS_LABELS, formatDate, levelLabel } from '../../lib/format';
+import { COMMITTEES, GOVERNORATES, LEVELS, ROLE_HINTS, ROLE_LABELS, STATUS_LABELS, formatDate, levelLabel, normalizeDigits } from '../../lib/format';
 import type { AdminUser, ApplicationDetail, ApplicationListItem, ApplicationStatus, Paged, UserRole } from '../../lib/types';
 import { AdminTitle } from './AdminLayout';
 import { useManagedColleges } from './Content';
@@ -159,12 +159,93 @@ function Row({ label, children, ltr }: { label: string; children: ReactNode; ltr
   );
 }
 
+type EditForm = {
+  fullName: string; nationalId: string; studentCode: string; collegeId: string; department: string; level: string;
+  phone: string; whatsApp: string; email: string; governorate: string; city: string; address: string;
+  preferredCommittee: string; skills: string; previousActivities: string; motivation: string;
+};
+
+/** Lets a reviewer correct what the student entered. The decision and the ID scans are left as they are. */
+function EditApplication({ data, onClose }: { data: ApplicationDetail; onClose: () => void }) {
+  const queryClient = useQueryClient();
+  const toast = useToast();
+  const colleges = useManagedColleges();
+  const [form, setForm] = useState<EditForm>({
+    fullName: data.fullName, nationalId: data.nationalId ?? '', studentCode: data.studentCode, collegeId: String(data.collegeId),
+    department: data.department ?? '', level: String(data.level), phone: data.phone, whatsApp: data.whatsApp ?? '', email: data.email,
+    governorate: data.governorate, city: data.city ?? '', address: data.address, preferredCommittee: data.preferredCommittee ?? '',
+    skills: data.skills ?? '', previousActivities: data.previousActivities ?? '', motivation: data.motivation ?? '',
+  });
+  const set = (key: keyof EditForm) => (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) =>
+    setForm((f) => ({ ...f, [key]: e.target.value }));
+  const setDigits = (key: keyof EditForm, max: number) => (e: React.ChangeEvent<HTMLInputElement>) =>
+    setForm((f) => ({ ...f, [key]: normalizeDigits(e.target.value).replace(/\D/g, '').slice(0, max) }));
+
+  const save = useMutation({
+    mutationFn: () => api(`/api/admin/applications/${data.id}`, {
+      method: 'PUT',
+      body: {
+        ...Object.fromEntries(Object.entries(form).map(([key, value]) => [key, value.trim() || null])),
+        collegeId: Number(form.collegeId),
+        level: Number(form.level),
+      },
+    }),
+    onSuccess: () => {
+      toast('تم حفظ التعديلات.');
+      void queryClient.invalidateQueries({ queryKey: ['admin'] });
+      onClose();
+    },
+  });
+
+  return (
+    <form onSubmit={(e: FormEvent) => { e.preventDefault(); save.mutate(); }} className="grid gap-4" noValidate>
+      {save.error && <Alert>{(save.error as ApiError).message}</Alert>}
+      <div className="grid gap-4 sm:grid-cols-2">
+        <div className="sm:col-span-2"><Input label="الاسم رباعي" required value={form.fullName} onChange={set('fullName')} /></div>
+        <Input label="الرقم القومي" required dir="ltr" inputMode="numeric" value={form.nationalId} onChange={setDigits('nationalId', 14)} />
+        <Input label="الرقم الجامعي" required dir="ltr" value={form.studentCode} onChange={set('studentCode')} />
+        <Select label="الكلية" required value={form.collegeId} onChange={set('collegeId')}>
+          {colleges.data?.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
+          {!colleges.data && <option value={form.collegeId}>{data.collegeName}</option>}
+        </Select>
+        <Select label="الفرقة" required value={form.level} onChange={set('level')}>
+          {LEVELS.map((name, i) => <option key={name} value={i + 1}>الفرقة {name}</option>)}
+        </Select>
+        <Input label="القسم / الشعبة" value={form.department} onChange={set('department')} />
+        <Input label="الموبايل" required dir="ltr" inputMode="numeric" value={form.phone} onChange={setDigits('phone', 11)} />
+        <Input label="الواتساب" dir="ltr" inputMode="numeric" value={form.whatsApp} onChange={setDigits('whatsApp', 11)} />
+        <Input label="البريد الإلكتروني" required type="email" dir="ltr" value={form.email} onChange={set('email')} />
+        <Select label="المحافظة" required value={form.governorate} onChange={set('governorate')}>
+          {GOVERNORATES.map((g) => <option key={g}>{g}</option>)}
+        </Select>
+        <Input label="المدينة / المركز" value={form.city} onChange={set('city')} />
+        <div className="sm:col-span-2"><Input label="العنوان" required value={form.address} onChange={set('address')} /></div>
+        <div className="sm:col-span-2">
+          <Select label="اللجنة المفضلة" value={form.preferredCommittee} onChange={set('preferredCommittee')}>
+            <option value="">بدون تحديد</option>
+            {COMMITTEES.map((c) => <option key={c}>{c}</option>)}
+          </Select>
+        </div>
+        <Textarea label="المهارات" value={form.skills} onChange={set('skills')} maxLength={1000} />
+        <Textarea label="أنشطة سابقة" value={form.previousActivities} onChange={set('previousActivities')} maxLength={1000} />
+        <div className="sm:col-span-2"><Textarea label="سبب الانضمام" value={form.motivation} onChange={set('motivation')} maxLength={1500} /></div>
+      </div>
+      <p className="text-xs text-ink-500">التعديل لا يغيّر قرار الطلب ولا صور البطاقة، ويُسجَّل في سجل العمليات.</p>
+      <div className="flex flex-wrap gap-2">
+        <Button type="submit" loading={save.isPending}>حفظ التعديلات</Button>
+        <Button variant="ghost" onClick={onClose}>إلغاء</Button>
+      </div>
+    </form>
+  );
+}
+
 export function ApplicationDetailPage() {
   const { id } = useParams();
   const queryClient = useQueryClient();
   const toast = useToast();
   const [decision, setDecision] = useState<ApplicationStatus | null>(null);
   const [note, setNote] = useState('');
+  const [editing, setEditing] = useState(false);
   const { data, isPending, error, refetch } = useQuery({
     queryKey: ['admin', 'application', id],
     queryFn: () => api<ApplicationDetail>(`/api/admin/applications/${id}`),
@@ -198,7 +279,10 @@ export function ApplicationDetailPage() {
       <div className="grid gap-5 xl:grid-cols-[1.2fr_1fr]">
         <div className="grid gap-5">
           <Card className="p-5">
-            <h2 className="mb-1 text-lg font-extrabold">البيانات</h2>
+            <div className="mb-1 flex flex-wrap items-center justify-between gap-2">
+              <h2 className="text-lg font-extrabold">البيانات</h2>
+              <Button variant="outline" size="sm" onClick={() => setEditing(true)}><Pencil className="size-4" /> تعديل البيانات</Button>
+            </div>
             <dl>
               <Row label="الرقم الجامعي" ltr>{data.studentCode}</Row>
               <Row label="الرقم القومي" ltr>{data.nationalId ?? 'تعذر فك التشفير'}</Row>
@@ -208,7 +292,7 @@ export function ApplicationDetailPage() {
               <Row label="الموبايل" ltr><a href={`tel:${data.phone}`} className="text-brand-700 hover:underline">{data.phone}</a></Row>
               <Row label="الواتساب" ltr>{data.whatsApp}</Row>
               <Row label="البريد الإلكتروني" ltr>{data.email}</Row>
-              <Row label="بريد الحساب" ltr>{data.accountEmail !== data.email ? data.accountEmail : ''}</Row>
+              <Row label="بريد الحساب القديم" ltr>{data.accountEmail && data.accountEmail !== data.email ? data.accountEmail : ''}</Row>
               <Row label="العنوان">{[data.governorate, data.city, data.address].filter(Boolean).join(' — ')}</Row>
               <Row label="اللجنة المفضلة">{data.preferredCommittee}</Row>
               <Row label="المهارات">{data.skills}</Row>
@@ -257,6 +341,10 @@ export function ApplicationDetailPage() {
           <StudentCardPanel student={data} photoPath={data.hasPhoto ? `${base}/photo` : null} codePath={`/api/admin/applications/${data.id}/card-code`} />
         </Card>
       )}
+
+      <Modal open={editing} title="تعديل بيانات الطالب" onClose={() => setEditing(false)} wide>
+        {editing && <EditApplication data={data} onClose={() => setEditing(false)} />}
+      </Modal>
 
       <Modal open={!!decision} title={decision ? labels[decision] : ''} onClose={() => setDecision(null)}>
         <form onSubmit={(e: FormEvent) => { e.preventDefault(); review.mutate(); }} className="grid gap-4">

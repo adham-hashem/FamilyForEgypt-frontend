@@ -127,16 +127,21 @@ function usePrivateImage(path: string | null) {
 
 /**
  * The card with its photo and check-in QR loaded, plus a print button.
- * photoPath and codePath are API paths; codePath returns { code }, the member's personal check-in code.
+ * Staff pass API paths (photoPath is fetched with their session; codePath returns { code }). The status
+ * page passes what the lookup already gave: photoSrc, a plain image address, and code itself.
  */
-export function StudentCardPanel({ student, photoPath, codePath }: { student: CardStudent; photoPath: string | null; codePath: string }) {
-  const photo = usePrivateImage(photoPath);
+export function StudentCardPanel({ student, photoPath = null, photoSrc = null, codePath = null, code = null }: {
+  student: CardStudent; photoPath?: string | null; photoSrc?: string | null; codePath?: string | null; code?: string | null;
+}) {
+  const privatePhoto = usePrivateImage(photoPath);
+  const photo = photoSrc ?? privatePhoto;
   const { data: qr } = useQuery({
-    queryKey: ['card-qr', codePath],
+    queryKey: ['card-qr', codePath, code],
     queryFn: async () => {
-      const { code } = await api<{ code: string }>(codePath);
-      return QRCode.toDataURL(code, { width: 360, margin: 1, errorCorrectionLevel: 'M' });
+      const value = code ?? (await api<{ code: string }>(codePath!)).code;
+      return QRCode.toDataURL(value, { width: 360, margin: 1, errorCorrectionLevel: 'M' });
     },
+    enabled: !!(code || codePath),
     staleTime: Infinity,
     retry: false,
   });

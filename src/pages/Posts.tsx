@@ -7,9 +7,8 @@ import { PageHeader } from '../components/Layout';
 import { CoverFallback, PostGrid, PostGridSkeleton } from '../components/PostCard';
 import { Badge, EmptyState, ErrorState, LinkButton, PageLoader, Pagination, cx } from '../components/ui';
 import { api, mediaUrl, toQuery, type ApiError } from '../lib/api';
-import { POST_TYPE_LABELS, formatDate, formatDateTime, formatTime } from '../lib/format';
+import { POST_TYPE_LABELS, formatDate, formatDateTime, formatNumber, formatTime } from '../lib/format';
 import type { College, Paged, PostDetail, PostListItem } from '../lib/types';
-import { AttendBox } from './Engagement';
 
 const VIEWS = [
   { key: 'all', label: 'الكل' },
@@ -273,7 +272,9 @@ export function PostDetailPage() {
             </div>
           )}
 
-          {isEvent && post.status === 'Published' && <AttendBox post={post} />}
+          {isEvent && post.attendeesCount > 0 && (
+            <p className="mt-4 text-sm font-bold text-ink-600">حضر {formatNumber(post.attendeesCount)} من أعضاء الأسرة.</p>
+          )}
 
           <div className="mt-7"><RichText text={post.body} /></div>
 

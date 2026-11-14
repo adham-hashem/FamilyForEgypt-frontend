@@ -101,6 +101,13 @@
   }
 }
 
+/* Black text that stays readable on the dark hero: a white outline drawn behind the black fill. */
+@utility text-egypt-black {
+  color: #000;
+  -webkit-text-stroke: 0.09em #fff;
+  paint-order: stroke fill;
+}
+
 /* The three flag stripes, used as a thin signature line under headers. */
 @utility flag-line {
   background: linear-gradient(to left, var(--color-brand-600) 0 33.3%, #fff 33.3% 66.6%, var(--color-ink-900) 66.6% 100%);

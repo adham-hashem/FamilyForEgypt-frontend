@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { Link, useParams, useSearchParams } from 'react-router-dom';
 import { FlagName } from '../components/FlagName';
 import { PageHeader } from '../components/Layout';
+import { AdSlot } from '../components/AdSlot';
 import { CoverFallback, PostGrid, PostGridSkeleton } from '../components/PostCard';
 import { Badge, EmptyState, ErrorState, LinkButton, PageLoader, Pagination, cx } from '../components/ui';
 import { api, mediaUrl, toQuery, type ApiError } from '../lib/api';
@@ -125,7 +126,7 @@ export default function Posts() {
           />
         ) : (
           <div className={cx('transition-opacity', isPlaceholderData && 'opacity-60')}>
-            <PostGrid posts={data.items} />
+            <PostGrid posts={data.items} withAd />
             <Pagination page={data.page} pageSize={data.pageSize} total={data.total} onChange={(next) => { update({ page: String(next) }); window.scrollTo({ top: 0 }); }} />
           </div>
         )}
@@ -277,6 +278,7 @@ export function PostDetailPage() {
           )}
 
           <div className="mt-7"><RichText text={post.body} /></div>
+          <AdSlot placement="Content" className="mt-9" wide />
 
           {post.images.length > 1 && (
             <section className="mt-9">

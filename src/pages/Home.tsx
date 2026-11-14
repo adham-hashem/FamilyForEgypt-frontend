@@ -1,6 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
+import { HomeAds } from '../components/AdSlot';
 import { FlagName } from '../components/FlagName';
-import { ArrowLeft, Building2, CalendarDays, Eye, Newspaper, Target, Users } from 'lucide-react';
+import { ArrowLeft, Building2, CalendarDays, Eye, Lightbulb, MessageSquareWarning, Newspaper, Target, Trophy, Users } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { PostGrid } from '../components/PostCard';
 import { EmptyState, ErrorState, LinkButton, SectionHeading } from '../components/ui';
@@ -120,6 +121,31 @@ function Banner({ settings }: { settings: Record<string, string> }) {
         />
       </div>
       <div className="h-[3px] flag-line" aria-hidden />
+    </section>
+  );
+}
+
+/** The ways a student takes part beyond joining: competitions, suggestions and complaints. */
+function TakePart() {
+  const items = [
+    { to: '/competitions', icon: Trophy, title: 'المسابقات', text: 'ثقافية ودينية وعلمية ورياضية وفنية: شارك من هنا أو سجّل للمسابقات على أرض الواقع.', tone: 'from-gold-300/30 to-flame-500/10' },
+    { to: '/feedback', icon: Lightbulb, title: 'شاركنا اقتراحك', text: 'فكرة لنشاط أو تحسين في العملية التعليمية؟ اقتراحك يصل لرائد الأسرة في كليتك.', tone: 'from-emerald-200/50 to-emerald-50' },
+    { to: '/feedback?kind=complaint', icon: MessageSquareWarning, title: 'قدّم شكوى', text: 'مشكلة واجهتك؟ أرسلها وتابع الرد عليها برقمك القومي.', tone: 'from-brand-200/50 to-brand-50' },
+  ];
+  return (
+    <section className="py-14">
+      <div className="container-page">
+        <SectionHeading eyebrow="صوتك مسموع" title="شارك معنا" />
+        <div className="grid gap-4 md:grid-cols-3">
+          {items.map(({ to, icon: Icon, title, text, tone }) => (
+            <Link key={to} to={to} className={`group rounded-2xl border border-ink-200 bg-gradient-to-br ${tone} p-6 shadow-card transition hover:-translate-y-0.5 hover:shadow-lift`}>
+              <Icon className="size-8 text-ink-800" />
+              <p className="mt-3 text-xl font-black group-hover:text-brand-700">{title}</p>
+              <p className="mt-1 leading-7 text-ink-600">{text}</p>
+            </Link>
+          ))}
+        </div>
+      </div>
     </section>
   );
 }
@@ -256,12 +282,16 @@ export default function Home() {
         <div className="container-page">
           <SectionHeading eyebrow="آخر المستجدات" title="أحدث الأنشطة والأخبار" action={seeAll('/activities')} />
           {data.latestPosts.length > 0 ? (
-            <PostGrid posts={data.latestPosts} />
+            <PostGrid posts={data.latestPosts} withAd />
           ) : (
             <EmptyState title="لا توجد أخبار بعد" text="ستظهر أخبار وأنشطة الأسرة والكليات هنا." />
           )}
         </div>
       </section>
+
+      <TakePart />
+
+      <HomeAds />
 
       <About settings={data.settings} />
 

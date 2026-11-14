@@ -8,6 +8,7 @@ import { FlagName, withFlagName } from './FlagName';
 const NAV = [
   { to: '/', label: 'الرئيسية', end: true },
   { to: '/activities', label: 'الأنشطة والفعاليات' },
+  { to: '/competitions', label: 'المسابقات' },
   { to: '/colleges', label: 'الكليات' },
   { to: '/about', label: 'عن الأسرة' },
   { to: '/join', label: 'انضم للأسرة' },
@@ -123,6 +124,8 @@ export function Footer() {
               <li key={item.to}><Link to={item.to} className="hover:text-white">{item.label}</Link></li>
             ))}
             <li><Link to="/status" className="hover:text-white">متابعة طلب الانضمام</Link></li>
+            <li><Link to="/feedback" className="hover:text-white">اقتراحات وشكاوى</Link></li>
+            <li><Link to="/advertise" className="hover:text-white">أعلن معنا</Link></li>
             <li><Link to="/login" className="hover:text-white">دخول المسؤولين</Link></li>
           </ul>
         </nav>

@@ -17,6 +17,19 @@ const Colleges = lazy(() => import('./pages/Colleges'));
 const CollegeDetail = lazy(() => import('./pages/Colleges').then((m) => ({ default: m.CollegeDetailPage })));
 const Join = lazy(() => import('./pages/Join'));
 const Status = lazy(() => import('./pages/Status'));
+const Feedback = lazy(() => import('./pages/Feedback'));
+const Advertise = lazy(() => import('./pages/Advertise'));
+const Competitions = lazy(() => import('./pages/Competitions'));
+const CompetitionPage = lazy(() => import('./pages/Competitions').then((m) => ({ default: m.CompetitionPage })));
+const CourseDetail = lazy(() => import('./pages/Colleges').then((m) => ({ default: m.CourseDetailPage })));
+const engagement = () => import('./pages/admin/Engagement');
+const AdminCourses = lazy(() => engagement().then((m) => ({ default: m.AdminCourses })));
+const AdminCompetitions = lazy(() => engagement().then((m) => ({ default: m.AdminCompetitions })));
+const CompetitionEditor = lazy(() => engagement().then((m) => ({ default: m.CompetitionEditor })));
+const CompetitionEntries = lazy(() => engagement().then((m) => ({ default: m.CompetitionEntriesPage })));
+const AdminFeedback = lazy(() => engagement().then((m) => ({ default: m.AdminFeedback })));
+const AdminAdRequests = lazy(() => engagement().then((m) => ({ default: m.AdminAdRequests })));
+const AdminAds = lazy(() => engagement().then((m) => ({ default: m.AdminAds })));
 const About = lazy(() => import('./pages/About'));
 const ForgotPassword = lazy(() => import('./pages/Recovery').then((m) => ({ default: m.ForgotPassword })));
 const AdminAttendees = lazy(() => import('./pages/Attendance').then((m) => ({ default: m.AdminAttendees })));
@@ -112,6 +125,11 @@ const router = createBrowserRouter([
           { path: 'join', element: <Join /> },
           { path: 'login', element: <Login /> },
           { path: 'status', element: <Status /> },
+          { path: 'feedback', element: <Feedback /> },
+          { path: 'advertise', element: <Advertise /> },
+          { path: 'competitions', element: <Competitions /> },
+          { path: 'competitions/:id', element: <CompetitionPage /> },
+          { path: 'courses/:id', element: <CourseDetail /> },
           // Student accounts are gone; old links to the sign-up page lead to the join form.
           { path: 'register', element: <Navigate to="/join" replace /> },
           { path: 'forgot-password', element: <ForgotPassword /> },
@@ -131,6 +149,14 @@ const router = createBrowserRouter([
                   { path: 'resources', element: <AdminResources /> },
                   { path: 'resources/new', element: <ResourceEditor /> },
                   { path: 'resources/:id', element: <ResourceEditor /> },
+                  { path: 'courses', element: <AdminCourses /> },
+                  { path: 'competitions', element: <AdminCompetitions /> },
+                  { path: 'competitions/new', element: <CompetitionEditor /> },
+                  { path: 'competitions/:id', element: <CompetitionEditor /> },
+                  { path: 'competitions/:id/entries', element: <CompetitionEntries /> },
+                  { path: 'feedback', element: <RequireAuth minimum="CollegeAdmin"><AdminFeedback /></RequireAuth> },
+                  { path: 'ad-requests', element: <RequireAuth minimum="UniversityAdmin"><AdminAdRequests /></RequireAuth> },
+                  { path: 'ads', element: <RequireAuth minimum="UniversityAdmin"><AdminAds /></RequireAuth> },
                   { path: 'applications', element: <RequireAuth minimum="CollegeAdmin"><AdminApplications /></RequireAuth> },
                   { path: 'applications/:id', element: <RequireAuth minimum="CollegeAdmin"><ApplicationDetail /></RequireAuth> },
                   { path: 'users', element: <RequireAuth minimum="CollegeAdmin"><AdminUsers /></RequireAuth> },

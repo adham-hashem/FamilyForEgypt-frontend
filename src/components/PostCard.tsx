@@ -1,8 +1,10 @@
+import { Fragment } from 'react';
 import { CalendarDays, Clock, Images, MapPin, Pin } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { mediaUrl } from '../lib/api';
 import { POST_TYPE_LABELS, formatDate, formatDay, formatMonth, formatTime } from '../lib/format';
 import type { PostListItem } from '../lib/types';
+import { AdCard, useAdFor } from './AdSlot';
 import { Badge, cx } from './ui';
 import { FlagName } from './FlagName';
 
@@ -88,10 +90,19 @@ export function PostGridSkeleton({ count = 6 }: { count?: number }) {
   );
 }
 
-export function PostGrid({ posts }: { posts: PostListItem[] }) {
+/** withAd slips one sponsored card in after the fifth post (or at the end of a shorter list). */
+export function PostGrid({ posts, withAd }: { posts: PostListItem[]; withAd?: boolean }) {
+  const ad = useAdFor('Feed');
+  const at = Math.min(5, posts.length);
   return (
     <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-      {posts.map((post) => <PostCard key={post.id} post={post} />)}
+      {posts.map((post, index) => (
+        <Fragment key={post.id}>
+          {withAd && ad && index === at ? <AdCard ad={ad} /> : null}
+          <PostCard post={post} />
+        </Fragment>
+      ))}
+      {withAd && ad && at === posts.length ? <AdCard ad={ad} /> : null}
     </div>
   );
 }

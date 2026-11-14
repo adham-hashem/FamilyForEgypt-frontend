@@ -1,7 +1,8 @@
 export type UserRole = 'Student' | 'CollegeEditor' | 'CollegeAdmin' | 'UniversityAdmin' | 'SuperAdmin';
 export type PostType = 'News' | 'Event' | 'Announcement';
 export type PostStatus = 'Draft' | 'Published';
-export type ResourceCategory = 'Schedule' | 'ExamSchedule' | 'Lecture' | 'Material' | 'Other';
+export type ResourceCategory =
+  | 'Schedule' | 'ExamSchedule' | 'Lecture' | 'Tutorial' | 'Summary' | 'Assignment' | 'EducationalEvent' | 'Material' | 'Other';
 export type ApplicationStatus = 'Pending' | 'Approved' | 'Rejected' | 'NeedsChanges';
 export type LeaderSlot = 'President' | 'UniversityPresident' | 'Other';
 
@@ -116,6 +117,9 @@ export interface Resource {
   createdAt: string;
   updatedAt: string;
   files: ResourceFile[];
+  courseId: number | null;
+  /** Deadline of an assignment, or the date of an exam or an educational event. */
+  dueAt: string | null;
 }
 
 export interface Leader {
@@ -271,4 +275,189 @@ export interface CheckInResult {
   checkedInAt: string;
   badgeNumber: number;
   alreadyCheckedIn: boolean;
+}
+
+// ---------- courses ----------
+
+export interface Course {
+  id: number;
+  collegeId: number;
+  collegeName: string | null;
+  name: string;
+  code: string | null;
+  level: number;
+  term: number;
+  department: string | null;
+  instructor: string | null;
+  description: string | null;
+  isPublished: boolean;
+  resourcesCount: number;
+  updatedAt: string;
+}
+
+// ---------- advertising ----------
+
+export type AdPlacement = 'Home' | 'Feed' | 'Content';
+export type AdRequestStatus = 'New' | 'Contacted' | 'Accepted' | 'Rejected';
+
+export interface Ad {
+  id: number;
+  title: string;
+  advertiserName: string;
+  description: string | null;
+  imageUrl: string;
+  thumbUrl: string;
+  imageWidth: number;
+  imageHeight: number;
+  hasLink: boolean;
+  placement: AdPlacement;
+}
+
+export interface AdAdmin {
+  id: number;
+  title: string;
+  advertiserName: string;
+  description: string | null;
+  imageUrl: string;
+  thumbUrl: string;
+  linkUrl: string | null;
+  placement: AdPlacement;
+  startsAt: string | null;
+  endsAt: string | null;
+  isActive: boolean;
+  isLive: boolean;
+  sortOrder: number;
+  clicks: number;
+  adRequestId: number | null;
+  createdAt: string;
+}
+
+export interface AdRequest {
+  id: number;
+  organizationName: string;
+  contactName: string;
+  phone: string;
+  email: string | null;
+  website: string | null;
+  adKind: string | null;
+  message: string;
+  status: AdRequestStatus;
+  adminNote: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+// ---------- suggestions and complaints ----------
+
+export type FeedbackKind = 'Suggestion' | 'Complaint';
+export type FeedbackTopic = 'Activities' | 'Education' | 'Other';
+export type FeedbackStatus = 'New' | 'InReview' | 'Resolved';
+
+export interface MyFeedback {
+  id: number;
+  kind: FeedbackKind;
+  topic: FeedbackTopic;
+  subject: string;
+  message: string;
+  status: FeedbackStatus;
+  reply: string | null;
+  repliedAt: string | null;
+  createdAt: string;
+}
+
+export interface FeedbackItem extends MyFeedback {
+  fullName: string;
+  nationalIdMasked: string;
+  collegeId: number;
+  collegeName: string;
+  department: string | null;
+  level: number;
+  phone: string | null;
+  updatedAt: string;
+}
+
+// ---------- competitions ----------
+
+export type CompetitionCategory = 'Cultural' | 'Religious' | 'Scientific' | 'Sports' | 'Arts' | 'Literary' | 'Technology' | 'Other';
+export type CompetitionMode = 'OnSite' | 'Online';
+export type CompetitionFormat = 'Registration' | 'Riddle' | 'Quiz' | 'Submission';
+
+export interface QuizQuestion {
+  text: string;
+  options: string[];
+  /** Only sent once the results are published (or to organisers). */
+  correct: number | null;
+}
+
+export interface CompetitionListItem {
+  id: number;
+  title: string;
+  summary: string;
+  category: CompetitionCategory;
+  mode: CompetitionMode;
+  format: CompetitionFormat;
+  collegeId: number | null;
+  collegeName: string | null;
+  thumbUrl: string | null;
+  prize: string | null;
+  eventAt: string | null;
+  opensAt: string | null;
+  closesAt: string | null;
+  isOpen: boolean;
+  resultsPublished: boolean;
+  entriesCount: number;
+  isPublished: boolean;
+}
+
+export interface Winner {
+  fullName: string;
+  collegeName: string;
+  rank: number | null;
+}
+
+export interface Competition {
+  id: number;
+  title: string;
+  description: string;
+  category: CompetitionCategory;
+  mode: CompetitionMode;
+  format: CompetitionFormat;
+  collegeId: number | null;
+  collegeName: string | null;
+  imageUrl: string | null;
+  thumbUrl: string | null;
+  prize: string | null;
+  rules: string | null;
+  location: string | null;
+  eventAt: string | null;
+  opensAt: string | null;
+  closesAt: string | null;
+  question: string | null;
+  questions: QuizQuestion[];
+  acceptedAnswers: string[];
+  isOpen: boolean;
+  isPublished: boolean;
+  resultsPublished: boolean;
+  entriesCount: number;
+  winners: Winner[];
+  canManage: boolean;
+}
+
+export interface CompetitionEntry {
+  id: number;
+  fullName: string;
+  nationalIdMasked: string;
+  collegeName: string;
+  department: string | null;
+  level: number;
+  phone: string | null;
+  answer: string | null;
+  choices: number[];
+  hasFile: boolean;
+  fileName: string | null;
+  isCorrect: boolean | null;
+  score: number | null;
+  isWinner: boolean;
+  rank: number | null;
+  createdAt: string;
 }

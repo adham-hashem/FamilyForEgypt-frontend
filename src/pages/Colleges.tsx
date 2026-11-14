@@ -1,13 +1,14 @@
 import { keepPreviousData, useQuery } from '@tanstack/react-query';
-import { ArrowRight, Building2, Download, ExternalLink, FileText, Globe, UserRound } from 'lucide-react';
+import { ArrowRight, BookOpen, Building2, CalendarClock, Download, ExternalLink, FileText, Globe, UserRound } from 'lucide-react';
 import { useState } from 'react';
 import { Link, useParams, useSearchParams } from 'react-router-dom';
+import { AdSlot } from '../components/AdSlot';
 import { PageHeader } from '../components/Layout';
 import { PostGrid, PostGridSkeleton } from '../components/PostCard';
 import { Badge, EmptyState, ErrorState, LinkButton, PageLoader, Pagination, cx } from '../components/ui';
 import { api, mediaUrl, toQuery, type ApiError } from '../lib/api';
-import { CATEGORY_LABELS, LEVELS, TERMS, formatDate, formatSize, levelLabel } from '../lib/format';
-import type { College, CollegeDetail, Paged, Resource, ResourceCategory } from '../lib/types';
+import { CATEGORY_LABELS, DUE_LABELS, LEVELS, TERMS, formatDate, formatDateTime, formatNumber, formatSize, levelLabel } from '../lib/format';
+import type { College, CollegeDetail, Course, Paged, Resource, ResourceCategory } from '../lib/types';
 import { CollegeTile } from './Home';
 import { usePostList } from './Posts';
 
@@ -38,19 +39,36 @@ export default function Colleges() {
 
 const TABS: Array<{ key: string; label: string; category?: ResourceCategory }> = [
   { key: 'news', label: 'الأخبار والفعاليات' },
-  { key: 'schedules', label: 'الجداول الدراسية', category: 'Schedule' },
+  { key: 'courses', label: 'المقررات' },
+  { key: 'schedules', label: 'جداول المحاضرات', category: 'Schedule' },
   { key: 'exams', label: 'جداول الامتحانات', category: 'ExamSchedule' },
   { key: 'lectures', label: 'المحاضرات', category: 'Lecture' },
+  { key: 'tutorials', label: 'السكاشن', category: 'Tutorial' },
+  { key: 'summaries', label: 'الملخصات', category: 'Summary' },
+  { key: 'assignments', label: 'التكليفات', category: 'Assignment' },
+  { key: 'events', label: 'أحداث تعليمية', category: 'EducationalEvent' },
   { key: 'materials', label: 'مذكرات وملفات', category: 'Material' },
   { key: 'other', label: 'أخرى', category: 'Other' },
 ];
 
-function ResourceCard({ resource }: { resource: Resource }) {
+/** The deadline or date of an item, highlighted while it is still ahead. */
+function DueBadge({ resource }: { resource: Resource }) {
+  if (!resource.dueAt) return null;
+  const upcoming = new Date(resource.dueAt).getTime() > Date.now();
+  return (
+    <span className={cx('flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-extrabold', upcoming ? 'bg-amber-100 text-amber-800' : 'bg-ink-100 text-ink-500')}>
+      <CalendarClock className="size-3.5" /> {DUE_LABELS[resource.category] ?? 'الموعد'}: {formatDateTime(resource.dueAt)}
+    </span>
+  );
+}
+
+export function ResourceCard({ resource, showCategory }: { resource: Resource; showCategory?: boolean }) {
   const images = resource.files.filter((f) => f.isImage);
   const documents = resource.files.filter((f) => !f.isImage);
   return (
     <div className="rounded-2xl border border-ink-200 bg-white p-5 shadow-card">
       <div className="flex flex-wrap items-center gap-2">
+        {showCategory && <Badge tone="dark">{CATEGORY_LABELS[resource.category]}</Badge>}
         <Badge tone="brand">{levelLabel(resource.level)}</Badge>
         {resource.term > 0 && <Badge>{TERMS[resource.term]}</Badge>}
         {resource.department && <Badge>{resource.department}</Badge>}
@@ -58,6 +76,7 @@ function ResourceCard({ resource }: { resource: Resource }) {
         <span className="ms-auto text-xs font-semibold text-ink-400">{formatDate(resource.createdAt)}</span>
       </div>
       <h3 className="mt-2.5 text-lg font-extrabold">{resource.title}</h3>
+      {resource.dueAt && <div className="mt-2 flex"><DueBadge resource={resource} /></div>}
       {resource.description && <p className="mt-1 whitespace-pre-line leading-7 text-ink-600">{resource.description}</p>}
 
       {images.length > 0 && (
@@ -135,6 +154,42 @@ function Resources({ collegeId, category }: { collegeId: number; category: Resou
           <Pagination page={data.page} pageSize={data.pageSize} total={data.total} onChange={setPage} />
         </div>
       )}
+    </div>
+  );
+}
+
+function CollegeCourses({ collegeId }: { collegeId: number }) {
+  const { data, isPending, isError, refetch } = useQuery({
+    queryKey: ['courses', collegeId], queryFn: () => api<Course[]>(`/api/colleges/${collegeId}/courses`),
+  });
+  if (isPending) return <div className="grid gap-4 sm:grid-cols-2">{Array.from({ length: 4 }, (_, i) => <div key={i} className="skeleton h-28" />)}</div>;
+  if (isError) return <ErrorState onRetry={() => void refetch()} />;
+  if (data.length === 0) return <EmptyState title="لم تُضف مقررات بعد" text="يضيف رائد الأسرة بالكلية المقررات ومحتواها هنا." />;
+
+  const levels = [...new Set(data.map((c) => c.level))].sort((a, b) => (a || 99) - (b || 99));
+  return (
+    <div className="grid gap-8">
+      {levels.map((level) => (
+        <section key={level}>
+          <h3 className="mb-3 text-lg font-black">{levelLabel(level)}</h3>
+          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+            {data.filter((c) => c.level === level).map((course) => (
+              <Link key={course.id} to={`/courses/${course.id}`} className="group rounded-2xl border border-ink-200 bg-white p-4 shadow-card transition hover:-translate-y-0.5 hover:border-brand-300">
+                <div className="flex items-start gap-3">
+                  <span className="grid size-11 shrink-0 place-items-center rounded-xl bg-brand-50 text-brand-600"><BookOpen className="size-5" /></span>
+                  <div className="min-w-0">
+                    <p className="font-extrabold group-hover:text-brand-700">{course.name}</p>
+                    <p className="text-xs font-semibold text-ink-500">
+                      {[course.code, course.term > 0 ? TERMS[course.term] : null, course.instructor].filter(Boolean).join(' · ')}
+                    </p>
+                  </div>
+                </div>
+                <p className="mt-3 text-sm font-bold text-ink-600">{formatNumber(course.resourcesCount)} عنصر</p>
+              </Link>
+            ))}
+          </div>
+        </section>
+      ))}
     </div>
   );
 }
@@ -218,7 +273,73 @@ export function CollegeDetailPage() {
           ))}
         </div>
 
-        {tab.category ? <Resources key={tab.key} collegeId={collegeId} category={tab.category} /> : <CollegePosts collegeId={collegeId} />}
+        {tab.category ? <Resources key={tab.key} collegeId={collegeId} category={tab.category} />
+          : tab.key === 'courses' ? <CollegeCourses collegeId={collegeId} /> : <CollegePosts collegeId={collegeId} />}
+        <AdSlot placement="Content" className="mt-10" wide />
+      </div>
+    </>
+  );
+}
+
+/** One course and everything filed under it: lectures, tutorials, summaries, assignments, schedules… */
+export function CourseDetailPage() {
+  const { id } = useParams();
+  const [category, setCategory] = useState<ResourceCategory | ''>('');
+  const [page, setPage] = useState(1);
+  const course = useQuery({
+    queryKey: ['course', id], queryFn: () => api<Course>(`/api/courses/${id}`),
+    retry: (count, err) => (err as ApiError).status !== 404 && count < 2,
+  });
+  const resources = useQuery({
+    queryKey: ['resources', 'course', id, category, page],
+    queryFn: () => api<Paged<Resource>>(`/api/resources${toQuery({ collegeId: course.data!.collegeId, courseId: id, category: category || undefined, page, pageSize: 10 })}`),
+    enabled: !!course.data,
+    placeholderData: keepPreviousData,
+  });
+
+  if (course.isPending) return <PageLoader />;
+  if (course.error) {
+    return (
+      <div className="container-page py-16">
+        {(course.error as ApiError).status === 404
+          ? <EmptyState title="المقرر غير موجود" action={<LinkButton to="/colleges">الكليات</LinkButton>} />
+          : <ErrorState onRetry={() => void course.refetch()} />}
+      </div>
+    );
+  }
+
+  const c = course.data;
+  return (
+    <>
+      <PageHeader title={c.name} subtitle={[c.collegeName, levelLabel(c.level), c.term > 0 ? TERMS[c.term] : null, c.code].filter(Boolean).join(' · ')}>
+        <Link to={`/colleges/${c.collegeId}?tab=courses`} className="absolute top-4 flex items-center gap-1 text-sm font-bold text-ink-300 hover:text-white">
+          <ArrowRight className="size-4" /> مقررات الكلية
+        </Link>
+        {c.instructor && <p className="mt-3 flex items-center gap-1.5 text-ink-300"><UserRound className="size-4 text-gold-300" /> {c.instructor}</p>}
+      </PageHeader>
+      <div className="container-page py-8">
+        {c.description && <p className="mb-6 max-w-3xl whitespace-pre-line text-lg leading-8 text-ink-700">{c.description}</p>}
+        <div className="-mx-4 mb-5 flex gap-2 overflow-x-auto px-4 pb-1 sm:mx-0 sm:px-0">
+          {(['', ...Object.keys(CATEGORY_LABELS)] as Array<ResourceCategory | ''>).map((key) => (
+            <button key={key || 'all'} onClick={() => { setCategory(key); setPage(1); }} aria-pressed={category === key}
+              className={cx('shrink-0 rounded-full border px-3.5 py-1.5 text-sm font-bold transition', category === key ? 'border-brand-600 bg-brand-600 text-white' : 'border-ink-300 bg-white text-ink-700 hover:border-ink-500')}>
+              {key ? CATEGORY_LABELS[key] : 'الكل'}
+            </button>
+          ))}
+        </div>
+        {resources.isPending ? (
+          <div className="grid gap-4">{Array.from({ length: 3 }, (_, i) => <div key={i} className="skeleton h-32" />)}</div>
+        ) : resources.isError ? (
+          <ErrorState onRetry={() => void resources.refetch()} />
+        ) : resources.data.items.length === 0 ? (
+          <EmptyState title="لا يوجد محتوى هنا بعد" text="يظهر محتوى المقرر هنا فور إضافته." />
+        ) : (
+          <div className={cx('grid gap-4 transition-opacity', resources.isPlaceholderData && 'opacity-60')}>
+            {resources.data.items.map((r) => <ResourceCard key={r.id} resource={r} showCategory={!category} />)}
+            <Pagination page={resources.data.page} pageSize={resources.data.pageSize} total={resources.data.total} onChange={setPage} />
+          </div>
+        )}
+        <AdSlot placement="Content" className="mt-10" wide />
       </div>
     </>
   );

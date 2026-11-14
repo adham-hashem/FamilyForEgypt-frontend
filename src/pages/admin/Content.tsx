@@ -9,9 +9,9 @@ import { api, mediaUrl, toQuery, type ApiError } from '../../lib/api';
 import { MAX_PICKED_IMAGE } from '../../lib/images';
 import { useAuth } from '../../lib/auth';
 import {
-  CATEGORY_LABELS, LEVELS, POST_TYPE_LABELS, TERMS, formatDate, formatSize, fromLocalInput, levelLabel, toLocalInput,
+  CATEGORY_LABELS, DUE_LABELS, LEVELS, POST_TYPE_LABELS, TERMS, formatDate, formatSize, fromLocalInput, levelLabel, toLocalInput,
 } from '../../lib/format';
-import type { College, Paged, PostDetail, PostImage, PostListItem, PostType, Resource, ResourceCategory, ResourceFile } from '../../lib/types';
+import type { College, Course, Paged, PostDetail, PostImage, PostListItem, PostType, Resource, ResourceCategory, ResourceFile } from '../../lib/types';
 import { AdminTitle } from './AdminLayout';
 
 const MAX_IMAGE = MAX_PICKED_IMAGE;
@@ -490,7 +490,17 @@ function ResourceForm({ resource }: { resource: Resource | null }) {
     courseName: resource?.courseName ?? '',
     externalUrl: resource?.externalUrl ?? '',
     isPublished: resource?.isPublished ?? true,
+    courseId: resource?.courseId ? String(resource.courseId) : '',
+    dueAt: toLocalInput(resource?.dueAt ?? null),
   });
+  const { user } = useAuth();
+  const collegeForCourses = resource ? resource.collegeId : hasRole('UniversityAdmin') ? Number(form.collegeId) || null : user?.collegeId ?? null;
+  const courses = useQuery({
+    queryKey: ['admin', 'courses', collegeForCourses],
+    queryFn: () => api<Course[]>(`/api/admin/courses${toQuery({ collegeId: collegeForCourses })}`),
+    enabled: !!collegeForCourses,
+  });
+  const dueLabel = DUE_LABELS[form.category];
   const [kept, setKept] = useState<ResourceFile[]>(resource?.files ?? []);
   const [added, setAdded] = useState<File[]>([]);
   const [problem, setProblem] = useState('');
@@ -526,7 +536,12 @@ function ResourceForm({ resource }: { resource: Resource | null }) {
   const save = useMutation({
     mutationFn: () => {
       const body = new FormData();
-      for (const [key, value] of Object.entries(form)) body.append(key, typeof value === 'string' ? value.trim() : String(value));
+      for (const [key, value] of Object.entries(form)) {
+        if (key === 'dueAt' || key === 'courseId') continue;
+        body.append(key, typeof value === 'string' ? value.trim() : String(value));
+      }
+      if (form.courseId) body.append('courseId', form.courseId);
+      if (form.dueAt) body.append('dueAt', fromLocalInput(form.dueAt) ?? '');
       kept.forEach((file) => body.append('keepFileIds', file.id));
       added.forEach((file) => body.append('files', file));
       return api<Resource>(resource ? `/api/admin/resources/${resource.id}` : '/api/admin/resources', { method: resource ? 'PUT' : 'POST', form: body });
@@ -555,7 +570,17 @@ function ResourceForm({ resource }: { resource: Resource | null }) {
             {TERMS.slice(1).map((name, i) => <option key={name} value={i + 1}>{name}</option>)}
           </Select>
           <Input label="القسم / البرنامج" maxLength={120} value={form.department} onChange={(e) => setForm((f) => ({ ...f, department: e.target.value }))} hint="اختياري" />
-          <Input label="اسم المقرر" maxLength={150} value={form.courseName} onChange={(e) => setForm((f) => ({ ...f, courseName: e.target.value }))} hint="اختياري — مفيد للمحاضرات" />
+          <Select label="المقرر" value={form.courseId} disabled={!collegeForCourses || courses.isPending}
+            onChange={(e) => {
+              const course = courses.data?.find((c) => String(c.id) === e.target.value);
+              setForm((f) => ({ ...f, courseId: e.target.value, courseName: course ? course.name : f.courseName, level: course ? String(course.level) : f.level, term: course ? String(course.term) : f.term }));
+            }}
+            hint={courses.data?.length === 0 ? 'لا توجد مقررات بعد — أضفها من «المقررات».' : 'اختياري — يظهر المحتوى داخل صفحة المقرر'}>
+            <option value="">بدون مقرر</option>
+            {courses.data?.map((c) => <option key={c.id} value={c.id}>{c.name}{c.code ? ` (${c.code})` : ''}</option>)}
+          </Select>
+          <Input label={dueLabel ?? 'التاريخ'} type="datetime-local" value={form.dueAt} onChange={(e) => setForm((f) => ({ ...f, dueAt: e.target.value }))}
+            hint={dueLabel ? 'اختياري — يظهر للطلاب مميزاً' : 'اختياري — لأي محتوى له موعد'} />
           <div className="sm:col-span-2">
             <Textarea label="الوصف" maxLength={4000} value={form.description} onChange={(e) => setForm((f) => ({ ...f, description: e.target.value }))} />
           </div>

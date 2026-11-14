@@ -1,4 +1,7 @@
-import type { ApplicationStatus, LeaderSlot, PostType, ResourceCategory, UserRole } from './types';
+import type {
+  AdPlacement, AdRequestStatus, ApplicationStatus, CompetitionCategory, CompetitionFormat, CompetitionMode, FeedbackKind,
+  FeedbackStatus, FeedbackTopic, LeaderSlot, PostType, ResourceCategory, UserRole,
+} from './types';
 
 const TZ = 'Africa/Cairo';
 const dateFmt = new Intl.DateTimeFormat('ar-EG', { timeZone: TZ, day: 'numeric', month: 'long', year: 'numeric' });
@@ -44,7 +47,7 @@ export function fromLocalInput(value: string) {
 export const ROLE_LABELS: Record<UserRole, string> = {
   Student: 'طالب',
   CollegeEditor: 'محرر كلية',
-  CollegeAdmin: 'مسؤول كلية',
+  CollegeAdmin: 'رائد الأسرة بالكلية',
   UniversityAdmin: 'مسؤول الجامعة',
   SuperAdmin: 'مدير النظام',
 };
@@ -56,7 +59,7 @@ export const ROLE_RANK: Record<UserRole, number> = {
 export const ROLE_HINTS: Record<UserRole, string> = {
   Student: 'حساب عادي بدون صلاحيات إدارية.',
   CollegeEditor: 'ينشر ويعدّل أخبار وفعاليات ومحتوى كليته فقط.',
-  CollegeAdmin: 'يدير محتوى كليته، يراجع طلبات العضوية، ويضيف المحررين.',
+  CollegeAdmin: 'رائد الأسرة في كليته: يرفع الجداول والمقررات والمحاضرات، يراجع طلبات العضوية والمقترحات والشكاوى، ويضيف المحررين.',
   UniversityAdmin: 'ينشئ الكليات ويعيّن مسؤوليها، ويدير محتوى الجامعة والصفحة الرئيسية.',
   SuperAdmin: 'كل الصلاحيات.',
 };
@@ -64,11 +67,46 @@ export const ROLE_HINTS: Record<UserRole, string> = {
 export const POST_TYPE_LABELS: Record<PostType, string> = { News: 'خبر', Event: 'فعالية', Announcement: 'إعلان' };
 
 export const CATEGORY_LABELS: Record<ResourceCategory, string> = {
-  Schedule: 'الجداول الدراسية',
+  Schedule: 'جداول المحاضرات',
   ExamSchedule: 'جداول الامتحانات',
   Lecture: 'المحاضرات',
+  Tutorial: 'السكاشن (Tutorials)',
+  Summary: 'الملخصات',
+  Assignment: 'التكليفات (Assignments)',
+  EducationalEvent: 'أحداث تعليمية',
   Material: 'مذكرات وملفات',
   Other: 'أخرى',
+};
+
+/** What the date of an item means, for the categories that have one. */
+export const DUE_LABELS: Partial<Record<ResourceCategory, string>> = {
+  Assignment: 'آخر موعد للتسليم',
+  ExamSchedule: 'موعد الامتحان',
+  EducationalEvent: 'الموعد',
+};
+
+export const AD_PLACEMENT_LABELS: Record<AdPlacement, string> = {
+  Home: 'الصفحة الرئيسية',
+  Feed: 'بين الأنشطة والأخبار',
+  Content: 'أسفل صفحات المحتوى',
+};
+
+export const AD_REQUEST_STATUS_LABELS: Record<AdRequestStatus, string> = {
+  New: 'جديد', Contacted: 'تم التواصل', Accepted: 'مقبول', Rejected: 'مرفوض',
+};
+
+export const FEEDBACK_KIND_LABELS: Record<FeedbackKind, string> = { Suggestion: 'اقتراح', Complaint: 'شكوى' };
+export const FEEDBACK_TOPIC_LABELS: Record<FeedbackTopic, string> = {
+  Activities: 'الأنشطة والفعاليات', Education: 'العملية التعليمية', Other: 'موضوع آخر',
+};
+export const FEEDBACK_STATUS_LABELS: Record<FeedbackStatus, string> = { New: 'جديدة', InReview: 'قيد المتابعة', Resolved: 'تم الرد' };
+
+export const COMPETITION_CATEGORY_LABELS: Record<CompetitionCategory, string> = {
+  Cultural: 'ثقافية', Religious: 'دينية', Scientific: 'علمية', Sports: 'رياضية', Arts: 'فنية', Literary: 'أدبية', Technology: 'تقنية', Other: 'أخرى',
+};
+export const COMPETITION_MODE_LABELS: Record<CompetitionMode, string> = { OnSite: 'على أرض الواقع', Online: 'على الموقع' };
+export const COMPETITION_FORMAT_LABELS: Record<CompetitionFormat, string> = {
+  Registration: 'تسجيل للمشاركة', Riddle: 'فزورة / سؤال', Quiz: 'أسئلة اختيار من متعدد', Submission: 'إرسال عمل (صورة، ملف، نص)',
 };
 
 export const STATUS_LABELS: Record<ApplicationStatus, string> = {

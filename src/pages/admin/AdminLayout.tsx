@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import {
-  Building2, ClipboardList, FolderOpen, History, Home, LayoutDashboard, Newspaper, Plus, ShieldCheck, Users, type LucideIcon,
+  BookOpen, Building2, ClipboardList, FolderOpen, History, Home, Inbox, LayoutDashboard, Megaphone, MessagesSquare, Newspaper, Plus, ShieldCheck, Trophy, Users, type LucideIcon,
 } from 'lucide-react';
 import { Link, NavLink, Outlet } from 'react-router-dom';
 import { Card, ErrorState, LinkButton, cx } from '../../components/ui';
@@ -14,11 +14,16 @@ interface NavItem { to: string; label: string; icon: LucideIcon; minimum: UserRo
 const NAV: NavItem[] = [
   { to: '/admin', label: 'نظرة عامة', icon: LayoutDashboard, minimum: 'CollegeEditor', end: true },
   { to: '/admin/posts', label: 'الأخبار والفعاليات', icon: Newspaper, minimum: 'CollegeEditor' },
+  { to: '/admin/courses', label: 'المقررات', icon: BookOpen, minimum: 'CollegeEditor' },
   { to: '/admin/resources', label: 'الجداول والمحاضرات', icon: FolderOpen, minimum: 'CollegeEditor' },
+  { to: '/admin/competitions', label: 'المسابقات', icon: Trophy, minimum: 'CollegeEditor' },
+  { to: '/admin/feedback', label: 'الاقتراحات والشكاوى', icon: MessagesSquare, minimum: 'CollegeAdmin' },
   { to: '/admin/applications', label: 'طلبات العضوية', icon: ClipboardList, minimum: 'CollegeAdmin' },
   { to: '/admin/users', label: 'المسؤولون والصلاحيات', icon: Users, minimum: 'CollegeAdmin' },
   { to: '/admin/colleges', label: 'الكليات', icon: Building2, minimum: 'CollegeAdmin' },
   { to: '/admin/site', label: 'الصفحة الرئيسية', icon: Home, minimum: 'UniversityAdmin' },
+  { to: '/admin/ad-requests', label: 'طلبات الإعلان', icon: Inbox, minimum: 'UniversityAdmin' },
+  { to: '/admin/ads', label: 'الإعلانات', icon: Megaphone, minimum: 'UniversityAdmin' },
   { to: '/admin/audit', label: 'سجل العمليات', icon: History, minimum: 'SuperAdmin' },
 ];
 

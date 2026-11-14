@@ -3,10 +3,11 @@ import { BadgeCheck, Clock, KeyRound, LogOut, ShieldCheck, TriangleAlert, XCircl
 import { useState, type FormEvent, type ReactNode } from 'react';
 import { Link, Navigate, useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import { PageHeader } from '../components/Layout';
+import { StudentCardPanel } from '../components/StudentCard';
 import { Alert, Button, Card, Input, LinkButton, PageLoader, useToast } from '../components/ui';
 import { api, type ApiError } from '../lib/api';
 import { useAuth } from '../lib/auth';
-import { ROLE_LABELS, STATUS_LABELS, formatDate, levelLabel } from '../lib/format';
+import { ROLE_LABELS, STATUS_LABELS, formatDate } from '../lib/format';
 import type { AuthResponse, MyApplication, User, UserRole } from '../lib/types';
 import { CheckInCard } from './Attendance';
 import { RecoveryWordsCard, WordsSheet } from './Recovery';
@@ -171,28 +172,17 @@ function MembershipPanel() {
 
   if (data.status === 'Approved') {
     return (
-      <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-ink-900 via-ink-800 to-brand-900 p-6 text-white shadow-lift">
-        <div className="pointer-events-none absolute -end-10 -top-10 size-44 rounded-full bg-flame-500/30 blur-3xl" aria-hidden />
-        <div className="relative flex items-start justify-between gap-4">
-          <div>
-            <p className="flex items-center gap-1.5 text-sm font-extrabold text-gold-300"><BadgeCheck className="size-5" /> بطاقة عضوية</p>
-            <p className="mt-3 text-2xl font-black">{data.fullName}</p>
-            <p className="mt-1 text-ink-300">{data.collegeName} — {levelLabel(data.level)}</p>
-          </div>
-          <img src="/brand/logo-sm.webp" alt="" className="size-16" />
+      <Card className="p-5 sm:p-6">
+        <div className="mb-5">
+          <h2 className="flex items-center gap-2 text-lg font-extrabold"><BadgeCheck className="size-5 text-emerald-600" /> كارنيه العضوية</h2>
+          <p className="mt-1 text-sm text-ink-600">الكود اللي على ظهر الكارنيه هو نفس كود الحضور، فالكارنيه المطبوع ينفع للتسجيل في الفعاليات.</p>
         </div>
-        <div className="relative mt-6 flex flex-wrap items-end justify-between gap-3 border-t border-white/15 pt-4">
-          <div>
-            <p className="text-xs font-bold text-ink-400">رقم العضوية</p>
-            <p className="text-xl font-black tracking-wider" dir="ltr">{data.membershipNumber}</p>
-          </div>
-          <div className="text-end">
-            <p className="text-xs font-bold text-ink-400">الرقم الجامعي</p>
-            <p className="font-extrabold" dir="ltr">{data.studentCode}</p>
-          </div>
-        </div>
-        <div className="absolute inset-x-0 bottom-0 h-1 flag-line" aria-hidden />
-      </div>
+        <StudentCardPanel
+          student={data}
+          photoPath={data.hasPhoto ? '/api/membership/mine/files/photo' : null}
+          codePath="/api/auth/checkin-code"
+        />
+      </Card>
     );
   }
 

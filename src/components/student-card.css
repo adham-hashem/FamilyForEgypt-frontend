@@ -1,0 +1,259 @@
+/*
+  The student ID card, at the standard bank-card size (ISO ID-1): 85.6 × 54 mm.
+  Every size is written in --u: one hundredth-ish of the card width on screen, exactly 1 mm on paper.
+*/
+.sid-frame {
+  container-type: inline-size;
+  width: 100%;
+  max-width: 460px;
+}
+
+.sid-card {
+  --u: calc(100cqw / 85.6);
+  position: relative;
+  width: 100%;
+  aspect-ratio: 85.6 / 54;
+  overflow: hidden;
+  border-radius: calc(3.2 * var(--u));
+  background: #fff;
+  color: #14110f;
+  font-family: var(--font-sans);
+  box-shadow: 0 18px 40px -18px rgb(20 17 15 / 0.45), 0 2px 6px rgb(20 17 15 / 0.12);
+  -webkit-print-color-adjust: exact;
+  print-color-adjust: exact;
+}
+
+.sid-flag {
+  display: flex;
+  height: calc(1 * var(--u));
+}
+.sid-flag i { flex: 1; }
+.sid-flag i:nth-child(1) { background: #c8102e; }
+.sid-flag i:nth-child(2) { background: #fff; }
+.sid-flag i:nth-child(3) { background: #000; }
+
+/* ---------- front ---------- */
+.sid-head {
+  display: flex;
+  align-items: center;
+  gap: calc(2.4 * var(--u));
+  height: calc(13.5 * var(--u));
+  padding: 0 calc(4 * var(--u));
+  background:
+    radial-gradient(circle at 12% 120%, rgb(242 124 28 / 0.35), transparent 55%),
+    radial-gradient(circle at 90% -40%, rgb(200 16 46 / 0.55), transparent 60%),
+    #14110f;
+  color: #fff;
+}
+.sid-logo {
+  width: calc(10.5 * var(--u));
+  height: calc(10.5 * var(--u));
+  filter: drop-shadow(0 calc(0.4 * var(--u)) calc(0.8 * var(--u)) rgb(0 0 0 / 0.5));
+}
+.sid-titles { flex: 1; min-width: 0; line-height: 1.25; }
+.sid-t1 { font-size: calc(3.7 * var(--u)); font-weight: 900; white-space: nowrap; }
+.sid-t2 { font-size: calc(2.15 * var(--u)); font-weight: 700; color: #e6cf7a; white-space: nowrap; }
+.sid-uni {
+  width: calc(9.4 * var(--u));
+  height: calc(9.4 * var(--u));
+  padding: calc(0.7 * var(--u));
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 0 0 calc(0.35 * var(--u)) #d4b24a;
+}
+.sid-uni img { width: 100%; height: 100%; object-fit: contain; }
+
+.sid-body {
+  position: relative;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) calc(21 * var(--u));
+  gap: calc(3.2 * var(--u));
+  padding: calc(2.8 * var(--u)) calc(4 * var(--u)) 0;
+}
+.sid-watermark {
+  position: absolute;
+  left: 50%;
+  top: 58%;
+  width: calc(40 * var(--u));
+  transform: translate(-50%, -50%);
+  opacity: 0.055;
+  pointer-events: none;
+}
+.sid-badge {
+  display: inline-block;
+  margin-bottom: calc(1.2 * var(--u));
+  padding: calc(0.35 * var(--u)) calc(2 * var(--u));
+  border-radius: 99px;
+  background: rgb(200 16 46 / 0.09);
+  color: #c8102e;
+  font-size: calc(1.85 * var(--u));
+  font-weight: 800;
+}
+.sid-field { min-width: 0; margin-bottom: calc(1.05 * var(--u)); }
+.sid-k { display: block; font-size: calc(1.7 * var(--u)); font-weight: 700; line-height: 1.3; color: #776b63; }
+.sid-v {
+  display: block;
+  overflow: hidden;
+  font-size: calc(2.55 * var(--u) * var(--fit, 1));
+  font-weight: 800;
+  line-height: 1.35;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+.sid-name .sid-v { font-size: calc(3.3 * var(--u) * var(--fit, 1)); font-weight: 900; }
+.sid-pair { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: calc(2 * var(--u)); }
+
+.sid-photo {
+  width: calc(21 * var(--u));
+  height: calc(25.5 * var(--u));
+  padding: calc(0.55 * var(--u));
+  border-radius: calc(2 * var(--u));
+  background: linear-gradient(135deg, #e6cf7a, #d4b24a 50%, #f27c1c);
+}
+.sid-photo-in {
+  display: grid;
+  place-items: center;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  border-radius: calc(1.5 * var(--u));
+  background: #f1ede8;
+  color: #cbc2ba;
+}
+.sid-photo-in img { width: 100%; height: 100%; object-fit: cover; }
+.sid-photo-in svg { width: 62%; }
+
+.sid-idbar {
+  position: absolute;
+  inset-inline: 0;
+  bottom: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: calc(2 * var(--u));
+  height: calc(7 * var(--u));
+  padding: 0 calc(4 * var(--u));
+  background: linear-gradient(to left, #c8102e, #880f24);
+  color: #fff;
+}
+.sid-idbar-k { font-size: calc(1.9 * var(--u)); font-weight: 700; opacity: 0.9; }
+.sid-idbar-v { font-size: calc(3.1 * var(--u)); font-weight: 900; letter-spacing: 0.06em; font-variant-numeric: tabular-nums; }
+.sid-idbar-y { font-size: calc(1.9 * var(--u)); font-weight: 800; color: #e6cf7a; white-space: nowrap; }
+.sid-ltr { direction: ltr; unicode-bidi: isolate; }
+
+/* ---------- back ---------- */
+.sid-back {
+  color: #fff;
+  background:
+    radial-gradient(circle at 85% 0%, rgb(200 16 46 / 0.55), transparent 50%),
+    radial-gradient(circle at 0% 110%, rgb(242 124 28 / 0.35), transparent 50%),
+    #14110f;
+}
+.sid-dots {
+  position: absolute;
+  inset: 0;
+  opacity: 0.08;
+  background-image: radial-gradient(circle at 1px 1px, #fff calc(0.22 * var(--u)), transparent 0);
+  background-size: calc(3 * var(--u)) calc(3 * var(--u));
+}
+.sid-bigmark {
+  position: absolute;
+  left: calc(-8 * var(--u));
+  bottom: calc(-10 * var(--u));
+  width: calc(46 * var(--u));
+  opacity: 0.08;
+}
+.sid-content {
+  position: relative;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) calc(25 * var(--u));
+  gap: calc(4 * var(--u));
+  padding: calc(3.6 * var(--u)) calc(4.5 * var(--u)) 0;
+}
+.sid-back h3 { margin: 0 0 calc(1.2 * var(--u)); font-size: calc(2.7 * var(--u)); font-weight: 900; color: #e6cf7a; }
+.sid-back ul { margin: 0; padding: 0; list-style: none; }
+.sid-back li {
+  position: relative;
+  margin-bottom: calc(0.7 * var(--u));
+  padding-inline-start: calc(2.6 * var(--u));
+  font-size: calc(1.8 * var(--u));
+  font-weight: 600;
+  line-height: 1.5;
+  color: #e5dfd8;
+}
+.sid-back li::before {
+  content: '';
+  position: absolute;
+  inset-inline-start: 0;
+  top: 0.62em;
+  width: calc(1 * var(--u));
+  height: calc(1 * var(--u));
+  border-radius: 50%;
+  background: #f27c1c;
+}
+.sid-qr {
+  padding: calc(1.2 * var(--u));
+  border-radius: calc(1.6 * var(--u));
+  background: #fff;
+  color: #14110f;
+  text-align: center;
+}
+.sid-qr img { display: block; width: 100%; aspect-ratio: 1; }
+.sid-qr-empty {
+  display: grid;
+  place-items: center;
+  aspect-ratio: 1;
+  font-size: calc(1.7 * var(--u));
+  font-weight: 700;
+  color: #776b63;
+}
+.sid-qr-k { margin-top: calc(0.4 * var(--u)); font-size: calc(1.5 * var(--u)); font-weight: 700; color: #776b63; }
+.sid-qr-v { font-size: calc(1.9 * var(--u)); font-weight: 900; letter-spacing: 0.04em; }
+.sid-sign {
+  position: absolute;
+  inset-inline-start: calc(4.5 * var(--u));
+  bottom: calc(3.4 * var(--u));
+  width: calc(36 * var(--u));
+  padding-top: calc(0.6 * var(--u));
+  border-top: calc(0.25 * var(--u)) dashed rgb(255 255 255 / 0.5);
+  font-size: calc(1.6 * var(--u));
+  font-weight: 700;
+  color: #cbc2ba;
+}
+.sid-site {
+  position: absolute;
+  inset-inline-end: calc(4.5 * var(--u));
+  bottom: calc(3.4 * var(--u));
+  font-size: calc(1.6 * var(--u));
+  font-weight: 700;
+  color: #e6cf7a;
+}
+.sid-back .sid-flag { position: absolute; inset-inline: 0; bottom: 0; }
+
+/* ---------- printing: one side per page, at the real size ---------- */
+@page student-card {
+  size: 85.6mm 54mm;
+  margin: 0;
+}
+
+@media print {
+  .print-root.card-print {
+    display: block;
+  }
+  .card-print .sid-frame {
+    page: student-card;
+    width: 85.6mm;
+    max-width: none;
+    break-after: page;
+  }
+  .card-print .sid-frame:last-child {
+    break-after: auto;
+  }
+  .card-print .sid-card {
+    --u: 1mm;
+    width: 85.6mm;
+    height: 54mm;
+    border-radius: 0;
+    box-shadow: none;
+  }
+}

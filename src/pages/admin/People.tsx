@@ -7,6 +7,7 @@ import {
 } from '../../components/ui';
 import { api, fetchBlobUrl, toQuery, type ApiError } from '../../lib/api';
 import { useAuth } from '../../lib/auth';
+import { StudentCardPanel } from '../../components/StudentCard';
 import { ROLE_HINTS, ROLE_LABELS, STATUS_LABELS, formatDate, levelLabel } from '../../lib/format';
 import type { AdminUser, ApplicationDetail, ApplicationListItem, ApplicationStatus, Paged, UserRole } from '../../lib/types';
 import { AdminTitle } from './AdminLayout';
@@ -248,6 +249,14 @@ export function ApplicationDetailPage() {
           </Card>
         </div>
       </div>
+
+      {data.status === 'Approved' && (
+        <Card className="mt-5 p-5">
+          <h2 className="text-lg font-extrabold">كارنيه العضو</h2>
+          <p className="mb-5 mt-1 text-sm text-ink-600">جاهز للطباعة. الكود اللي على الظهر هو كود حضور العضو في الفعاليات.</p>
+          <StudentCardPanel student={data} photoPath={data.hasPhoto ? `${base}/photo` : null} codePath={`/api/admin/applications/${data.id}/card-code`} />
+        </Card>
+      )}
 
       <Modal open={!!decision} title={decision ? labels[decision] : ''} onClose={() => setDecision(null)}>
         <form onSubmit={(e: FormEvent) => { e.preventDefault(); review.mutate(); }} className="grid gap-4">

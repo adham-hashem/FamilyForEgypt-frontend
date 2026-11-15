@@ -105,7 +105,7 @@ export function AdminCourses() {
   const formCollege = hasRole('UniversityAdmin') ? Number(form.collegeId) || null : user?.collegeId ?? null;
   const activeCollege = colleges.data?.find((c) => c.id === (editing ? formCollege : effectiveCollege));
   const levelsCount = activeCollege?.levelsCount ?? 7;
-  const system = activeCollege?.studySystem ?? 0;
+  const system = activeCollege?.studySystem;
   const list = useQuery({
     queryKey: ['admin', 'courses', collegeId || null, year, level, term],
     queryFn: () => api<Course[]>(`/api/admin/courses${toQuery({ collegeId: collegeId || undefined, academicYear: year, level: level || undefined, term: term || undefined })}`),
@@ -217,7 +217,7 @@ export function AdminCourses() {
           <Select label="نوع المقرر" value={form.kind} onChange={(e) => setForm((f) => ({ ...f, kind: e.target.value }))}>
             {Object.entries(COURSE_KIND_LABELS).map(([key, label]) => <option key={key} value={key}>{label}</option>)}
           </Select>
-          <Select label={system === 1 ? 'الساعات المعتمدة' : 'عدد الساعات الأسبوعية'} value={form.creditHours} onChange={(e) => setForm((f) => ({ ...f, creditHours: e.target.value }))}>
+          <Select label={system?.usesCredits ? 'الساعات / النقاط المعتمدة' : 'عدد الساعات الأسبوعية'} value={form.creditHours} onChange={(e) => setForm((f) => ({ ...f, creditHours: e.target.value }))}>
             <option value="">غير محدد</option>
             {[1, 2, 3, 4, 5, 6].map((n) => <option key={n} value={n}>{n}</option>)}
           </Select>

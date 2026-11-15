@@ -506,7 +506,7 @@ function ResourceForm({ resource }: { resource: Resource | null }) {
   const dueLabel = DUE_LABELS[form.category];
   const colleges = useManagedColleges();
   const activeCollege = colleges.data?.find((c) => c.id === collegeForCourses);
-  const system = activeCollege?.studySystem ?? 0;
+  const system = activeCollege?.studySystem;
   const [kept, setKept] = useState<ResourceFile[]>(resource?.files ?? []);
   const [added, setAdded] = useState<File[]>([]);
   const [problem, setProblem] = useState('');

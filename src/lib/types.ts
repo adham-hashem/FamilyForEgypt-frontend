@@ -44,8 +44,9 @@ export interface College {
   sortOrder: number;
   /** Years of study in the college (4 for most, 5 for engineering, up to 7). */
   levelsCount: number;
-  /** 0 = yearly system (الفرقة), 1 = credit hours (المستوى). */
-  studySystem: number;
+  studySystemId: number;
+  /** How the college counts its study; decides what a level is called (الفرقة or المستوى…). */
+  studySystem: StudySystem | null;
 }
 
 export interface CollegeDetail {
@@ -283,6 +284,16 @@ export interface CheckInResult {
 }
 
 // ---------- courses ----------
+
+export interface StudySystem {
+  id: number;
+  name: string;
+  /** What a level is called: «الفرقة» or «المستوى». */
+  levelWord: string;
+  usesCredits: boolean;
+  sortOrder: number;
+  isBuiltIn: boolean;
+}
 
 export interface Course {
   id: number;

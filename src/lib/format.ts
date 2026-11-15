@@ -1,7 +1,4 @@
-import type {
-  AdPlacement, AdRequestStatus, ApplicationStatus, CompetitionCategory, CompetitionFormat, CompetitionMode, FeedbackKind,
-  FeedbackStatus, FeedbackTopic, LeaderSlot, PostType, ResourceCategory, UserRole,
-} from './types';
+import type { AdPlacement, AdRequestStatus, ApplicationStatus, CompetitionCategory, CompetitionFormat, CompetitionMode, FeedbackKind, FeedbackStatus, FeedbackTopic, LeaderSlot, PostType, ResourceCategory, StudySystem, UserRole } from './types';
 
 const TZ = 'Africa/Cairo';
 const dateFmt = new Intl.DateTimeFormat('ar-EG', { timeZone: TZ, day: 'numeric', month: 'long', year: 'numeric' });
@@ -124,16 +121,14 @@ export const SLOT_LABELS: Record<LeaderSlot, string> = {
 };
 
 export const LEVELS = ['الأولى', 'الثانية', 'الثالثة', 'الرابعة', 'الخامسة', 'السادسة', 'السابعة'];
-/** 0 = yearly system (الفرقة), 1 = credit hours (المستوى). */
-export const levelWord = (system?: number | null) => (system === 1 ? 'المستوى' : 'الفرقة');
-export const levelLabel = (level: number, system?: number | null) =>
-  level > 0 ? `${levelWord(system)} ${LEVELS[level - 1] ?? level}` : system === 1 ? 'كل المستويات' : 'كل الفرق';
+/** What a level is called in the college's study system: «الفرقة» for yearly, «المستوى» for credit hours or points. */
+export const levelWord = (system?: StudySystem | null) => system?.levelWord ?? 'الفرقة';
+export const levelLabel = (level: number, system?: StudySystem | null) => {
+  const word = levelWord(system);
+  if (level > 0) return `${word} ${LEVELS[level - 1] ?? level}`;
+  return word === 'الفرقة' ? 'كل الفرق' : word === 'المستوى' ? 'كل المستويات' : 'الكل';
+};
 export const TERMS = ['', 'الفصل الأول', 'الفصل الثاني', 'الفصل الصيفي', 'سنوي (طوال العام)'];
-
-export const STUDY_SYSTEMS = [
-  { value: 0, label: 'نظام السنوات — الفرقة الأولى، الثانية…' },
-  { value: 1, label: 'الساعات المعتمدة — المستوى الأول، الثاني…' },
-];
 
 export const COURSE_KIND_LABELS: Record<number, string> = {
   0: 'غير محدد', 1: 'إجباري', 2: 'اختياري', 3: 'متطلب جامعة', 4: 'متطلب كلية',
@@ -199,7 +194,7 @@ export const currentTerm = (now = new Date()) => {
 export const academicYearLabel = (year: number) => `⁦${year}/${year + 1}⁩`;
 
 /** Levels a college actually has, as "الفرقة الأولى"…; falls back to four. */
-export const levelOptions = (levelsCount: number | null | undefined, system?: number | null) =>
+export const levelOptions = (levelsCount: number | null | undefined, system?: StudySystem | null) =>
   LEVELS.slice(0, Math.min(Math.max(levelsCount ?? 4, 1), LEVELS.length)).map((name, i) => ({ value: i + 1, label: `${levelWord(system)} ${name}` }));
 
 /** What a college usually has: levels of study by kind of college, so the leader starts from a sensible number. */

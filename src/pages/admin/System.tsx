@@ -7,7 +7,8 @@ import {
 import { api, mediaUrl, toQuery, type ApiError } from '../../lib/api';
 import { MAX_PICKED_IMAGE } from '../../lib/images';
 import { useAuth } from '../../lib/auth';
-import { SLOT_LABELS, STUDY_SYSTEMS, formatDateTime, suggestedLevels } from '../../lib/format';
+import { SLOT_LABELS, formatDateTime, suggestedLevels } from '../../lib/format';
+import { StudySystemsManager, useStudySystems } from '../../components/StudySystems';
 import type { AuditLog, College, Leader, LeaderSlot, Paged } from '../../lib/types';
 import { ImagePicker } from '../Join';
 import { AdminTitle } from './AdminLayout';
@@ -21,15 +22,17 @@ export function AdminColleges() {
   const queryClient = useQueryClient();
   const toast = useToast();
   const { data, isPending, isError, refetch } = useManagedColleges();
+  const systems = useStudySystems();
+  const [managingSystems, setManagingSystems] = useState(false);
   const [editing, setEditing] = useState<College | 'new' | null>(null);
   const [removing, setRemoving] = useState<College | null>(null);
-  const [form, setForm] = useState({ name: '', description: '', deanName: '', websiteUrl: '', sortOrder: '0', isActive: true, levelsCount: '4', studySystem: '0' });
+  const [form, setForm] = useState({ name: '', description: '', deanName: '', websiteUrl: '', sortOrder: '0', isActive: true, levelsCount: '4', studySystemId: '1' });
   const [logo, setLogo] = useState<File | null>(null);
 
   const open = (college: College | 'new') => {
     setForm(college === 'new'
-      ? { name: '', description: '', deanName: '', websiteUrl: '', sortOrder: String(data?.length ?? 0), isActive: true, levelsCount: '4', studySystem: '0' }
-      : { name: college.name, description: college.description ?? '', deanName: college.deanName ?? '', websiteUrl: college.websiteUrl ?? '', sortOrder: String(college.sortOrder), isActive: college.isActive, levelsCount: String(college.levelsCount), studySystem: String(college.studySystem ?? 0) });
+      ? { name: '', description: '', deanName: '', websiteUrl: '', sortOrder: String(data?.length ?? 0), isActive: true, levelsCount: '4', studySystemId: '1' }
+      : { name: college.name, description: college.description ?? '', deanName: college.deanName ?? '', websiteUrl: college.websiteUrl ?? '', sortOrder: String(college.sortOrder), isActive: college.isActive, levelsCount: String(college.levelsCount), studySystemId: String(college.studySystemId ?? 1) });
     setLogo(null);
     save.reset();
     setEditing(college);
@@ -56,8 +59,9 @@ export function AdminColleges() {
       <AdminTitle
         title="الكليات"
         subtitle={isUniversity ? 'أنشئ كليات الجامعة ثم عيّن لكل كلية مسؤوليها من صفحة «المسؤولون».' : 'بيانات كليتك كما تظهر للطلاب.'}
-        action={isUniversity ? <Button onClick={() => open('new')}><Plus className="size-4" /> كلية جديدة</Button> : undefined}
+        action={isUniversity ? <div className="flex flex-wrap gap-2"><Button variant="outline" onClick={() => setManagingSystems(true)}>أنظمة الدراسة</Button><Button onClick={() => open('new')}><Plus className="size-4" /> كلية جديدة</Button></div> : undefined}
       />
+      {isUniversity && <StudySystemsManager open={managingSystems} onClose={() => setManagingSystems(false)} />}
       {isPending ? (
         <div className="grid gap-2">{Array.from({ length: 4 }, (_, i) => <div key={i} className="skeleton h-20" />)}</div>
       ) : isError ? (
@@ -96,11 +100,11 @@ export function AdminColleges() {
           <ImagePicker label="شعار الكلية" file={logo} onChange={setLogo} existing={editing !== 'new' && !!(editing as College | null)?.logoUrl} />
           {isUniversity && (
             <div className="grid content-start gap-4">
-              <Select label="نظام الدراسة" value={form.studySystem} onChange={(e) => setForm((f) => ({ ...f, studySystem: e.target.value }))}
-                hint="يحدد التسمية في الموقع كله: «الفرقة» للنظام السنوي، و«المستوى» لنظام الساعات المعتمدة.">
-                {STUDY_SYSTEMS.map((s) => <option key={s.value} value={s.value}>{s.label}</option>)}
+              <Select label="نظام الدراسة" value={form.studySystemId} onChange={(e) => setForm((f) => ({ ...f, studySystemId: e.target.value }))}
+                hint="يحدد التسمية في الموقع كله. لو نظام كليتك غير موجود، أضفه من «أنظمة الدراسة» أعلى الصفحة.">
+                {systems.data?.map((s) => <option key={s.id} value={s.id}>{s.name} — {s.levelWord} الأولى، الثانية…</option>)}
               </Select>
-              <Select label={form.studySystem === '1' ? 'عدد المستويات' : 'عدد الفرق الدراسية'} value={form.levelsCount} onChange={(e) => setForm((f) => ({ ...f, levelsCount: e.target.value }))} hint={`المقترح لهذه الكلية: ${suggestedLevels(form.name)} (الطب 6، الهندسة والصيدلة والأسنان والبيطري 5، والباقي 4 غالباً). راجع لائحة الكلية.`}>
+              <Select label={`عدد ${systems.data?.find((s) => String(s.id) === form.studySystemId)?.levelWord === 'الفرقة' ? 'الفرق الدراسية' : 'المستويات'}`} value={form.levelsCount} onChange={(e) => setForm((f) => ({ ...f, levelsCount: e.target.value }))} hint={`المقترح لهذه الكلية: ${suggestedLevels(form.name)} (الطب 6، الهندسة والصيدلة والأسنان والبيطري 5، والباقي 4 غالباً). راجع لائحة الكلية.`}>
                 {[1, 2, 3, 4, 5, 6, 7].map((n) => <option key={n} value={n}>{n}</option>)}
               </Select>
               <Input label="ترتيب الظهور" type="number" min={0} max={1000} value={form.sortOrder} onChange={(e) => setForm((f) => ({ ...f, sortOrder: e.target.value }))} hint="الأصغر يظهر أولاً." />

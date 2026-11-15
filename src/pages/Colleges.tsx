@@ -10,7 +10,7 @@ import { api, mediaUrl, toQuery, type ApiError } from '../lib/api';
 import {
   CATEGORY_LABELS, COURSE_KIND_LABELS, DUE_LABELS, TERMS, academicYearLabel, currentAcademicYear, formatDate, formatDateTime, formatNumber, formatSize, levelLabel, levelOptions, levelWord,
 } from '../lib/format';
-import type { College, CollegeDetail, Course, Paged, Resource, ResourceCategory } from '../lib/types';
+import type { College, CollegeDetail, Course, Paged, Resource, ResourceCategory, StudySystem } from '../lib/types';
 import { CollegeTile } from './Home';
 import { usePostList } from './Posts';
 
@@ -65,7 +65,7 @@ function DueBadge({ resource }: { resource: Resource }) {
   );
 }
 
-export function ResourceCard({ resource, showCategory, system }: { resource: Resource; showCategory?: boolean; system?: number }) {
+export function ResourceCard({ resource, showCategory, system }: { resource: Resource; showCategory?: boolean; system?: StudySystem | null }) {
   const images = resource.files.filter((f) => f.isImage);
   const documents = resource.files.filter((f) => !f.isImage);
   return (
@@ -120,7 +120,7 @@ export function ResourceCard({ resource, showCategory, system }: { resource: Res
   );
 }
 
-function Resources({ collegeId, category, levelsCount, system }: { collegeId: number; category: ResourceCategory; levelsCount: number; system: number }) {
+function Resources({ collegeId, category, levelsCount, system }: { collegeId: number; category: ResourceCategory; levelsCount: number; system?: StudySystem | null }) {
   const [level, setLevel] = useState(0);
   const [page, setPage] = useState(1);
   const { data, isPending, isError, refetch, isPlaceholderData } = useQuery({
@@ -150,7 +150,7 @@ function Resources({ collegeId, category, levelsCount, system }: { collegeId: nu
       ) : data.items.length === 0 ? (
         <EmptyState
           title={`لا يوجد محتوى في «${CATEGORY_LABELS[category]}»`}
-          text={level ? `جرّب اختيار ${system === 1 ? 'مستوى' : 'فرقة'} أخرى أو عرض الكل.` : 'سيظهر المحتوى هنا فور إضافته من مسؤولي الكلية.'}
+          text={level ? `جرّب اختيار ${'قيمة'} أخرى أو عرض الكل.` : 'سيظهر المحتوى هنا فور إضافته من مسؤولي الكلية.'}
         />
       ) : (
         <div className={cx('grid gap-4 transition-opacity', isPlaceholderData && 'opacity-60')}>
@@ -162,7 +162,7 @@ function Resources({ collegeId, category, levelsCount, system }: { collegeId: nu
   );
 }
 
-function CollegeCourses({ collegeId, system }: { collegeId: number; system: number }) {
+function CollegeCourses({ collegeId, system }: { collegeId: number; system?: StudySystem | null }) {
   const { data, isPending, isError, refetch } = useQuery({
     queryKey: ['courses', collegeId, currentAcademicYear()],
     queryFn: () => api<Course[]>(`/api/colleges/${collegeId}/courses${toQuery({ academicYear: currentAcademicYear() })}`),
@@ -283,8 +283,8 @@ export function CollegeDetailPage() {
           ))}
         </div>
 
-        {tab.category ? <Resources key={tab.key} collegeId={collegeId} category={tab.category} levelsCount={college.levelsCount} system={college.studySystem ?? 0} />
-          : tab.key === 'courses' ? <CollegeCourses collegeId={collegeId} system={college.studySystem ?? 0} /> : <CollegePosts collegeId={collegeId} />}
+        {tab.category ? <Resources key={tab.key} collegeId={collegeId} category={tab.category} levelsCount={college.levelsCount} system={college.studySystem} />
+          : tab.key === 'courses' ? <CollegeCourses collegeId={collegeId} system={college.studySystem} /> : <CollegePosts collegeId={collegeId} />}
         <AdSlot placement="Content" className="mt-10" wide />
       </div>
     </>
@@ -301,7 +301,7 @@ export function CourseDetailPage() {
     retry: (count, err) => (err as ApiError).status !== 404 && count < 2,
   });
   const collegeList = useQuery({ queryKey: ['colleges'], queryFn: () => api<College[]>('/api/colleges'), staleTime: 300_000 });
-  const system = collegeList.data?.find((x) => x.id === course.data?.collegeId)?.studySystem ?? 0;
+  const system = collegeList.data?.find((x) => x.id === course.data?.collegeId)?.studySystem;
   const resources = useQuery({
     queryKey: ['resources', 'course', id, category, page],
     queryFn: () => api<Paged<Resource>>(`/api/resources${toQuery({ collegeId: course.data!.collegeId, courseId: id, category: category || undefined, page, pageSize: 10 })}`),

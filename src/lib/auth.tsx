@@ -9,7 +9,6 @@ interface AuthState {
   /** True until we know whether a previous session can be resumed. */
   loading: boolean;
   login(email: string, password: string): Promise<User>;
-  /** Resolves to the new account's recovery words, which are shown once. */
   logout(): Promise<void>;
   /** Stores a new token pair (after a password change) or refreshes the profile. */
   accept(auth: AuthResponse): void;

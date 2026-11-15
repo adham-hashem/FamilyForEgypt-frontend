@@ -33,6 +33,7 @@ const AdminAdRequests = lazy(() => engagement().then((m) => ({ default: m.AdminA
 const AdminAds = lazy(() => engagement().then((m) => ({ default: m.AdminAds })));
 const About = lazy(() => import('./pages/About'));
 const ForgotPassword = lazy(() => import('./pages/Recovery').then((m) => ({ default: m.ForgotPassword })));
+const ResetPassword = lazy(() => import('./pages/Recovery').then((m) => ({ default: m.ResetPassword })));
 const AdminAttendees = lazy(() => import('./pages/Attendance').then((m) => ({ default: m.AdminAttendees })));
 const AdminLayout = lazy(() => import('./pages/admin/AdminLayout'));
 const Dashboard = lazy(() => import('./pages/admin/AdminLayout').then((m) => ({ default: m.Dashboard })));
@@ -135,6 +136,7 @@ const router = createBrowserRouter([
           // Student accounts are gone; old links to the sign-up page lead to the join form.
           { path: 'register', element: <Navigate to="/join" replace /> },
           { path: 'forgot-password', element: <ForgotPassword /> },
+          { path: 'reset-password', element: <ResetPassword /> },
           { path: 'account', element: <RequireAuth><Account /></RequireAuth> },
           {
             path: 'admin',

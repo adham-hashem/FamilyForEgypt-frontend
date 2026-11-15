@@ -8,7 +8,6 @@ import { api, type ApiError } from '../lib/api';
 import { useAuth } from '../lib/auth';
 import { ROLE_LABELS } from '../lib/format';
 import type { AuthResponse, User, UserRole } from '../lib/types';
-import { RecoveryWordsCard } from './Recovery';
 
 /** Only same-site paths are honoured, so a crafted link cannot bounce the user to another site. */
 function safeNext(value: string | null) {
@@ -165,7 +164,6 @@ export function Account() {
         {forced || search.get('change') ? <ChangePassword forced={forced} /> : null}
         {!forced && (
           <>
-            {!user.hasRecoveryWords && <RecoveryWordsCard user={user} />}
             {user.role !== 'Student' && (
               <Card className="flex flex-wrap items-center justify-between gap-3 p-6">
                 <div>
@@ -177,7 +175,6 @@ export function Account() {
             )}
             <Profile user={user} />
             {!search.get('change') && <ChangePassword forced={false} />}
-            {user.hasRecoveryWords && <RecoveryWordsCard user={user} />}
           </>
         )}
         <div>

@@ -369,10 +369,11 @@ export function ApplicationDetailPage() {
 
 // ---------- staff and roles ----------
 
-function TemporaryPassword({ password, onClose }: { password: string | null; onClose: () => void }) {
+function TemporaryPassword({ password, emailSent, onClose }: { password: string | null; emailSent: boolean; onClose: () => void }) {
   const toast = useToast();
   return (
     <Modal open={!!password} title="كلمة المرور المؤقتة" onClose={onClose}>
+      {emailSent && <Alert tone="success">أُرسل بريد إلى صاحب الحساب فيه رابط لاختيار كلمة المرور بنفسه. كلمة المرور المؤقتة أدناه احتياطية إن لم يصله البريد.</Alert>}
       <Alert tone="warning">انسخها الآن وسلّمها لصاحب الحساب بشكل آمن. لن تظهر مرة أخرى، وسيُطلب منه تغييرها عند أول دخول.</Alert>
       <div className="mt-4 flex items-center gap-2">
         <code dir="ltr" className="flex-1 select-all rounded-xl bg-ink-900 px-4 py-3 text-center text-xl font-black tracking-widest text-gold-300">{password}</code>
@@ -419,6 +420,7 @@ export function AdminUsers() {
   const [creating, setCreating] = useState(false);
   const [editing, setEditing] = useState<AdminUser | null>(null);
   const [password, setPassword] = useState<string | null>(null);
+  const [emailSent, setEmailSent] = useState(false);
   const [form, setForm] = useState({ fullName: '', email: '', role: '' as UserRole | '', collegeId: '' });
 
   const roles = useQuery({ queryKey: ['admin', 'assignable-roles'], queryFn: () => api<UserRole[]>('/api/admin/users/assignable-roles'), staleTime: 300_000 });
@@ -431,13 +433,13 @@ export function AdminUsers() {
   const fail = (error: unknown) => toast((error as ApiError).message, 'error');
 
   const create = useMutation({
-    mutationFn: () => api<{ temporaryPassword: string | null; promoted: boolean }>('/api/admin/users', {
+    mutationFn: () => api<{ temporaryPassword: string | null; promoted: boolean; emailSent: boolean }>('/api/admin/users', {
       method: 'POST', body: { fullName: form.fullName.trim(), email: form.email.trim(), role: form.role, collegeId: form.collegeId ? Number(form.collegeId) : null },
     }),
     onSuccess: (result) => {
       setCreating(false);
       setForm({ fullName: '', email: '', role: '', collegeId: '' });
-      if (result.temporaryPassword) setPassword(result.temporaryPassword);
+      if (result.temporaryPassword) { setEmailSent(result.emailSent); setPassword(result.temporaryPassword); }
       else toast('تمت ترقية الحساب الموجود ومنحه الدور.');
       refresh();
     },
@@ -452,8 +454,8 @@ export function AdminUsers() {
     onError: fail,
   });
   const reset = useMutation({
-    mutationFn: (user: AdminUser) => api<{ temporaryPassword: string }>(`/api/admin/users/${user.id}/reset-password`, { method: 'POST' }),
-    onSuccess: (result) => setPassword(result.temporaryPassword),
+    mutationFn: (user: AdminUser) => api<{ temporaryPassword: string; emailSent: boolean }>(`/api/admin/users/${user.id}/reset-password`, { method: 'POST' }),
+    onSuccess: (result) => { setEmailSent(result.emailSent); setPassword(result.temporaryPassword); },
     onError: fail,
   });
 
@@ -545,7 +547,7 @@ export function AdminUsers() {
         </form>
       </Modal>
 
-      <TemporaryPassword password={password} onClose={() => setPassword(null)} />
+      <TemporaryPassword password={password} emailSent={emailSent} onClose={() => setPassword(null)} />
     </>
   );
 }

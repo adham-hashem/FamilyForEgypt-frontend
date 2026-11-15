@@ -23,7 +23,6 @@ export interface User {
   collegeName: string | null;
   mustChangePassword: boolean;
   membershipStatus: ApplicationStatus | null;
-  hasRecoveryWords: boolean;
 }
 
 export interface AuthResponse {
@@ -31,8 +30,6 @@ export interface AuthResponse {
   expiresAt: string;
   refreshToken: string | null;
   user: User;
-  /** Only present right after registering: the one time the words are shown. */
-  recoveryWords?: string[] | null;
 }
 
 export interface College {

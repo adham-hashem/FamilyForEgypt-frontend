@@ -9,9 +9,10 @@ import { api, mediaUrl, toQuery, type ApiError } from '../../lib/api';
 import { MAX_PICKED_IMAGE } from '../../lib/images';
 import { useAuth } from '../../lib/auth';
 import {
-  CATEGORY_LABELS, DUE_LABELS, LEVELS, POST_TYPE_LABELS, TERMS, academicYearLabel, currentAcademicYear, formatDate, formatSize, fromLocalInput, levelLabel, toLocalInput,
+  CATEGORY_LABELS, DUE_LABELS, POST_TYPE_LABELS, TERMS, academicYearLabel, currentAcademicYear, formatDate, formatSize, fromLocalInput, levelLabel, levelOptions, levelWord, toLocalInput,
 } from '../../lib/format';
 import type { College, Course, Paged, PostDetail, PostImage, PostListItem, PostType, Resource, ResourceCategory, ResourceFile } from '../../lib/types';
+import { DepartmentPicker } from '../../components/Departments';
 import { AdminTitle } from './AdminLayout';
 
 const MAX_IMAGE = MAX_PICKED_IMAGE;
@@ -431,7 +432,7 @@ export function AdminResources() {
                 <div className="min-w-0 flex-1">
                   <div className="flex flex-wrap items-center gap-1.5">
                     <Badge tone="dark">{CATEGORY_LABELS[resource.category]}</Badge>
-                    <Badge>{levelLabel(resource.level)}</Badge>
+                    <Badge>{levelLabel(resource.level, colleges.data?.find((c) => c.id === resource.collegeId)?.studySystem)}</Badge>
                     {!resource.isPublished && <Badge tone="amber">مخفي</Badge>}
                     {resource.files.length > 0 && <Badge><Paperclip className="size-3" /> {resource.files.length}</Badge>}
                   </div>
@@ -487,6 +488,7 @@ function ResourceForm({ resource }: { resource: Resource | null }) {
     level: String(resource?.level ?? 0),
     term: String(resource?.term ?? 0),
     department: resource?.department ?? '',
+    sequence: resource?.sequence ? String(resource.sequence) : '',
     courseName: resource?.courseName ?? '',
     externalUrl: resource?.externalUrl ?? '',
     isPublished: resource?.isPublished ?? true,
@@ -502,6 +504,9 @@ function ResourceForm({ resource }: { resource: Resource | null }) {
     enabled: !!collegeForCourses,
   });
   const dueLabel = DUE_LABELS[form.category];
+  const colleges = useManagedColleges();
+  const activeCollege = colleges.data?.find((c) => c.id === collegeForCourses);
+  const system = activeCollege?.studySystem ?? 0;
   const [kept, setKept] = useState<ResourceFile[]>(resource?.files ?? []);
   const [added, setAdded] = useState<File[]>([]);
   const [problem, setProblem] = useState('');
@@ -563,15 +568,16 @@ function ResourceForm({ resource }: { resource: Resource | null }) {
           <div className="sm:col-span-2">
             <Input label="العنوان" required maxLength={200} value={form.title} onChange={(e) => setForm((f) => ({ ...f, title: e.target.value }))} error={show('title')} placeholder="مثال: جدول محاضرات الفرقة الثانية — الفصل الأول" />
           </div>
-          <Select label="الفرقة" value={form.level} onChange={(e) => setForm((f) => ({ ...f, level: e.target.value }))}>
-            <option value="0">كل الفرق</option>
-            {LEVELS.map((name, i) => <option key={name} value={i + 1}>الفرقة {name}</option>)}
+          <Select label={levelWord(system)} value={form.level} onChange={(e) => setForm((f) => ({ ...f, level: e.target.value }))}>
+            <option value="0">{levelLabel(0, system)}</option>
+            {levelOptions(activeCollege?.levelsCount ?? 7, system).map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
           </Select>
           <Select label="الفصل الدراسي" value={form.term} onChange={(e) => setForm((f) => ({ ...f, term: e.target.value }))}>
             <option value="0">غير محدد</option>
             {TERMS.slice(1).map((name, i) => <option key={name} value={i + 1}>{name}</option>)}
           </Select>
-          <Input label="القسم / البرنامج" maxLength={120} value={form.department} onChange={(e) => setForm((f) => ({ ...f, department: e.target.value }))} hint="اختياري" />
+          <DepartmentPicker collegeId={collegeForCourses} value={form.department} onChange={(department) => setForm((f) => ({ ...f, department }))} />
+          <Input label="رقم المحاضرة / الأسبوع" type="number" min={1} max={60} value={form.sequence} onChange={(e) => setForm((f) => ({ ...f, sequence: e.target.value }))} hint="اختياري — ليُرتَّب المحتوى داخل المقرر" />
           <Select label="العام الجامعي" value={form.academicYear} disabled={!!form.courseId}
             onChange={(e) => setForm((f) => ({ ...f, academicYear: e.target.value, courseId: '' }))}
             hint={form.courseId ? 'يُؤخذ من المقرر المختار.' : 'اختر «غير مرتبط بعام» للمحتوى الذي يصلح لكل الأعوام.'}>

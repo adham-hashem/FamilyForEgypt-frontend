@@ -75,6 +75,7 @@ export const CATEGORY_LABELS: Record<ResourceCategory, string> = {
   Assignment: 'التكليفات (Assignments)',
   EducationalEvent: 'أحداث تعليمية',
   Material: 'مذكرات وملفات',
+  PastExam: 'امتحانات سابقة',
   Other: 'أخرى',
 };
 
@@ -123,8 +124,47 @@ export const SLOT_LABELS: Record<LeaderSlot, string> = {
 };
 
 export const LEVELS = ['الأولى', 'الثانية', 'الثالثة', 'الرابعة', 'الخامسة', 'السادسة', 'السابعة'];
-export const levelLabel = (level: number) => (level > 0 ? `الفرقة ${LEVELS[level - 1] ?? level}` : 'كل الفرق');
-export const TERMS = ['', 'الفصل الأول', 'الفصل الثاني', 'الفصل الصيفي'];
+/** 0 = yearly system (الفرقة), 1 = credit hours (المستوى). */
+export const levelWord = (system?: number | null) => (system === 1 ? 'المستوى' : 'الفرقة');
+export const levelLabel = (level: number, system?: number | null) =>
+  level > 0 ? `${levelWord(system)} ${LEVELS[level - 1] ?? level}` : system === 1 ? 'كل المستويات' : 'كل الفرق';
+export const TERMS = ['', 'الفصل الأول', 'الفصل الثاني', 'الفصل الصيفي', 'سنوي (طوال العام)'];
+
+export const STUDY_SYSTEMS = [
+  { value: 0, label: 'نظام السنوات — الفرقة الأولى، الثانية…' },
+  { value: 1, label: 'الساعات المعتمدة — المستوى الأول، الثاني…' },
+];
+
+export const COURSE_KIND_LABELS: Record<number, string> = {
+  0: 'غير محدد', 1: 'إجباري', 2: 'اختياري', 3: 'متطلب جامعة', 4: 'متطلب كلية',
+};
+export const COURSE_LANGUAGES = ['العربية', 'English', 'Français'];
+export const DEPARTMENT_KIND_LABELS: Record<number, string> = { 1: 'قسم', 2: 'شعبة', 3: 'برنامج' };
+
+/** Departments, divisions or programs commonly found in a college of this kind, for the leader to pick from in one tap. */
+export function departmentSuggestions(collegeName: string): { name: string; kind: number }[] {
+  const n = collegeName;
+  const d = (kind: number, ...names: string[]) => names.map((name) => ({ name, kind }));
+  if (/حاسب|معلومات|ذكاء/.test(n)) return d(3, 'علوم الحاسب', 'نظم المعلومات', 'تكنولوجيا المعلومات', 'الذكاء الاصطناعي', 'أمن المعلومات', 'علوم البيانات');
+  if (/هندس/.test(n)) return d(1, 'الهندسة المدنية', 'الهندسة الميكانيكية', 'الهندسة الكهربية', 'هندسة الإلكترونيات والاتصالات', 'الهندسة المعمارية', 'هندسة الحاسبات', 'الهندسة الكيميائية');
+  if (/علوم/.test(n)) return d(2, 'الرياضيات', 'الفيزياء', 'الكيمياء', 'النبات', 'علم الحيوان', 'الجيولوجيا', 'الإحصاء', 'علوم الحاسب');
+  if (/تجار|إدارة/.test(n)) return [...d(2, 'المحاسبة', 'إدارة الأعمال', 'الاقتصاد', 'التأمين والإحصاء', 'نظم المعلومات الإدارية'), ...d(3, 'القسم الإنجليزي')];
+  if (/آداب|اداب/.test(n)) return d(1, 'اللغة العربية', 'اللغة الإنجليزية', 'اللغة الفرنسية', 'التاريخ', 'الجغرافيا', 'علم الاجتماع', 'علم النفس', 'الإعلام', 'المكتبات والمعلومات', 'الفلسفة');
+  if (/تربي/.test(n)) return d(2, 'معلم فصل', 'تعليم أساسي', 'لغة عربية', 'لغة إنجليزية', 'رياضيات', 'علوم', 'دراسات اجتماعية', 'تربية خاصة');
+  if (/حقوق/.test(n)) return [...d(1, 'القانون العام', 'القانون الخاص', 'القانون الجنائي', 'الشريعة الإسلامية'), ...d(3, 'القسم الفرنسي')];
+  if (/صيدل/.test(n)) return d(1, 'الصيدلانيات', 'الكيمياء الصيدلية', 'العقاقير', 'الأدوية والسموم', 'الصيدلة الإكلينيكية', 'الميكروبيولوجيا');
+  if (/طب|بشري/.test(n) && !/بيطر|أسنان/.test(n)) return d(1, 'التشريح', 'الفسيولوجيا', 'الكيمياء الحيوية', 'الباثولوجيا', 'الباطنة', 'الجراحة', 'الأطفال', 'النساء والتوليد');
+  if (/أسنان|اسنان/.test(n)) return d(1, 'جراحة الفم', 'علاج الجذور', 'التقويم', 'طب الأطفال', 'الأسنان الصناعية', 'أمراض اللثة');
+  if (/بيطر/.test(n)) return d(1, 'التشريح', 'الفسيولوجيا', 'الباثولوجيا', 'الطفيليات', 'الجراحة', 'صحة الحيوان');
+  if (/زراع/.test(n)) return d(1, 'الإنتاج النباتي', 'الإنتاج الحيواني', 'الأراضي والمياه', 'وقاية النبات', 'الصناعات الغذائية');
+  if (/تمريض/.test(n)) return d(1, 'تمريض الباطنة والجراحة', 'تمريض الأطفال', 'تمريض الأمومة', 'التمريض النفسي', 'إدارة التمريض');
+  if (/علاج طبيعي/.test(n)) return d(1, 'علاج العظام', 'علاج الأعصاب', 'العلاج الطبيعي للأطفال', 'علاج القلب والصدر');
+  if (/سياح|فنادق/.test(n)) return d(1, 'الدراسات السياحية', 'الدراسات الفندقية', 'الإرشاد السياحي', 'الآثار');
+  if (/فنون/.test(n)) return d(1, 'التصميم', 'الرسم', 'النحت', 'التصوير', 'الجرافيك');
+  if (/خدمة اجتماعية/.test(n)) return d(1, 'مجالات الخدمة الاجتماعية', 'التخطيط الاجتماعي');
+  return [];
+}
+
 
 export const GOVERNORATES = [
   'دمياط', 'الدقهلية', 'بورسعيد', 'كفر الشيخ', 'الغربية', 'الشرقية', 'القاهرة', 'الجيزة', 'الإسكندرية', 'القليوبية',
@@ -159,5 +199,12 @@ export const currentTerm = (now = new Date()) => {
 export const academicYearLabel = (year: number) => `⁦${year}/${year + 1}⁩`;
 
 /** Levels a college actually has, as "الفرقة الأولى"…; falls back to four. */
-export const levelOptions = (levelsCount: number | null | undefined) =>
-  LEVELS.slice(0, Math.min(Math.max(levelsCount ?? 4, 1), LEVELS.length)).map((name, i) => ({ value: i + 1, label: `الفرقة ${name}` }));
+export const levelOptions = (levelsCount: number | null | undefined, system?: number | null) =>
+  LEVELS.slice(0, Math.min(Math.max(levelsCount ?? 4, 1), LEVELS.length)).map((name, i) => ({ value: i + 1, label: `${levelWord(system)} ${name}` }));
+
+/** What a college usually has: levels of study by kind of college, so the leader starts from a sensible number. */
+export function suggestedLevels(collegeName: string): number {
+  if (/بشري|^كلية الطب$|^كلية الطب /.test(collegeName) && !/بيطر|أسنان/.test(collegeName)) return 6;
+  if (/هندس|صيدل|أسنان|بيطر/.test(collegeName)) return 5;
+  return 4;
+}

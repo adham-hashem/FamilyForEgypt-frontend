@@ -7,7 +7,7 @@ import {
 import { api, mediaUrl, toQuery, type ApiError } from '../../lib/api';
 import { MAX_PICKED_IMAGE } from '../../lib/images';
 import { useAuth } from '../../lib/auth';
-import { SLOT_LABELS, formatDateTime } from '../../lib/format';
+import { SLOT_LABELS, STUDY_SYSTEMS, formatDateTime, suggestedLevels } from '../../lib/format';
 import type { AuditLog, College, Leader, LeaderSlot, Paged } from '../../lib/types';
 import { ImagePicker } from '../Join';
 import { AdminTitle } from './AdminLayout';
@@ -23,13 +23,13 @@ export function AdminColleges() {
   const { data, isPending, isError, refetch } = useManagedColleges();
   const [editing, setEditing] = useState<College | 'new' | null>(null);
   const [removing, setRemoving] = useState<College | null>(null);
-  const [form, setForm] = useState({ name: '', description: '', deanName: '', websiteUrl: '', sortOrder: '0', isActive: true, levelsCount: '4' });
+  const [form, setForm] = useState({ name: '', description: '', deanName: '', websiteUrl: '', sortOrder: '0', isActive: true, levelsCount: '4', studySystem: '0' });
   const [logo, setLogo] = useState<File | null>(null);
 
   const open = (college: College | 'new') => {
     setForm(college === 'new'
-      ? { name: '', description: '', deanName: '', websiteUrl: '', sortOrder: String(data?.length ?? 0), isActive: true, levelsCount: '4' }
-      : { name: college.name, description: college.description ?? '', deanName: college.deanName ?? '', websiteUrl: college.websiteUrl ?? '', sortOrder: String(college.sortOrder), isActive: college.isActive, levelsCount: String(college.levelsCount) });
+      ? { name: '', description: '', deanName: '', websiteUrl: '', sortOrder: String(data?.length ?? 0), isActive: true, levelsCount: '4', studySystem: '0' }
+      : { name: college.name, description: college.description ?? '', deanName: college.deanName ?? '', websiteUrl: college.websiteUrl ?? '', sortOrder: String(college.sortOrder), isActive: college.isActive, levelsCount: String(college.levelsCount), studySystem: String(college.studySystem ?? 0) });
     setLogo(null);
     save.reset();
     setEditing(college);
@@ -96,7 +96,11 @@ export function AdminColleges() {
           <ImagePicker label="شعار الكلية" file={logo} onChange={setLogo} existing={editing !== 'new' && !!(editing as College | null)?.logoUrl} />
           {isUniversity && (
             <div className="grid content-start gap-4">
-              <Select label="عدد الفرق الدراسية" value={form.levelsCount} onChange={(e) => setForm((f) => ({ ...f, levelsCount: e.target.value }))} hint="مثلاً 4، أو 5 للهندسة، أو 6–7 للطب. تظهر الفرق بناءً عليه في كل مكان.">
+              <Select label="نظام الدراسة" value={form.studySystem} onChange={(e) => setForm((f) => ({ ...f, studySystem: e.target.value }))}
+                hint="يحدد التسمية في الموقع كله: «الفرقة» للنظام السنوي، و«المستوى» لنظام الساعات المعتمدة.">
+                {STUDY_SYSTEMS.map((s) => <option key={s.value} value={s.value}>{s.label}</option>)}
+              </Select>
+              <Select label={form.studySystem === '1' ? 'عدد المستويات' : 'عدد الفرق الدراسية'} value={form.levelsCount} onChange={(e) => setForm((f) => ({ ...f, levelsCount: e.target.value }))} hint={`المقترح لهذه الكلية: ${suggestedLevels(form.name)} (الطب 6، الهندسة والصيدلة والأسنان والبيطري 5، والباقي 4 غالباً). راجع لائحة الكلية.`}>
                 {[1, 2, 3, 4, 5, 6, 7].map((n) => <option key={n} value={n}>{n}</option>)}
               </Select>
               <Input label="ترتيب الظهور" type="number" min={0} max={1000} value={form.sortOrder} onChange={(e) => setForm((f) => ({ ...f, sortOrder: e.target.value }))} hint="الأصغر يظهر أولاً." />

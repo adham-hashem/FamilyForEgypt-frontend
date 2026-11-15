@@ -8,7 +8,7 @@ import { PostGrid, PostGridSkeleton } from '../components/PostCard';
 import { Badge, EmptyState, ErrorState, LinkButton, PageLoader, Pagination, cx } from '../components/ui';
 import { api, mediaUrl, toQuery, type ApiError } from '../lib/api';
 import {
-  CATEGORY_LABELS, DUE_LABELS, LEVELS, TERMS, academicYearLabel, currentAcademicYear, formatDate, formatDateTime, formatNumber, formatSize, levelLabel,
+  CATEGORY_LABELS, COURSE_KIND_LABELS, DUE_LABELS, TERMS, academicYearLabel, currentAcademicYear, formatDate, formatDateTime, formatNumber, formatSize, levelLabel, levelOptions, levelWord,
 } from '../lib/format';
 import type { College, CollegeDetail, Course, Paged, Resource, ResourceCategory } from '../lib/types';
 import { CollegeTile } from './Home';
@@ -44,6 +44,7 @@ const TABS: Array<{ key: string; label: string; category?: ResourceCategory }> =
   { key: 'courses', label: 'المقررات' },
   { key: 'schedules', label: 'جداول المحاضرات', category: 'Schedule' },
   { key: 'exams', label: 'جداول الامتحانات', category: 'ExamSchedule' },
+  { key: 'pastexams', label: 'امتحانات سابقة', category: 'PastExam' },
   { key: 'lectures', label: 'المحاضرات', category: 'Lecture' },
   { key: 'tutorials', label: 'السكاشن', category: 'Tutorial' },
   { key: 'summaries', label: 'الملخصات', category: 'Summary' },
@@ -64,14 +65,15 @@ function DueBadge({ resource }: { resource: Resource }) {
   );
 }
 
-export function ResourceCard({ resource, showCategory }: { resource: Resource; showCategory?: boolean }) {
+export function ResourceCard({ resource, showCategory, system }: { resource: Resource; showCategory?: boolean; system?: number }) {
   const images = resource.files.filter((f) => f.isImage);
   const documents = resource.files.filter((f) => !f.isImage);
   return (
     <div className="rounded-2xl border border-ink-200 bg-white p-5 shadow-card">
       <div className="flex flex-wrap items-center gap-2">
         {showCategory && <Badge tone="dark">{CATEGORY_LABELS[resource.category]}</Badge>}
-        <Badge tone="brand">{levelLabel(resource.level)}</Badge>
+        <Badge tone="brand">{levelLabel(resource.level, system)}</Badge>
+        {resource.sequence ? <Badge tone="dark">رقم {resource.sequence}</Badge> : null}
         {resource.term > 0 && <Badge>{TERMS[resource.term]}</Badge>}
         {resource.department && <Badge>{resource.department}</Badge>}
         {resource.courseName && <Badge tone="gold">{resource.courseName}</Badge>}
@@ -118,7 +120,7 @@ export function ResourceCard({ resource, showCategory }: { resource: Resource; s
   );
 }
 
-function Resources({ collegeId, category, levelsCount }: { collegeId: number; category: ResourceCategory; levelsCount: number }) {
+function Resources({ collegeId, category, levelsCount, system }: { collegeId: number; category: ResourceCategory; levelsCount: number; system: number }) {
   const [level, setLevel] = useState(0);
   const [page, setPage] = useState(1);
   const { data, isPending, isError, refetch, isPlaceholderData } = useQuery({
@@ -129,8 +131,8 @@ function Resources({ collegeId, category, levelsCount }: { collegeId: number; ca
 
   return (
     <div>
-      <div className="-mx-4 mb-5 flex gap-2 overflow-x-auto px-4 pb-1 sm:mx-0 sm:px-0" aria-label="الفرقة الدراسية">
-        {['كل الفرق', ...LEVELS.slice(0, levelsCount).map((name) => `الفرقة ${name}`)].map((label, index) => (
+      <div className="-mx-4 mb-5 flex gap-2 overflow-x-auto px-4 pb-1 sm:mx-0 sm:px-0" aria-label={levelWord(system)}>
+        {[levelLabel(0, system), ...levelOptions(levelsCount, system).map((o) => o.label)].map((label, index) => (
           <button
             key={label}
             onClick={() => { setLevel(index); setPage(1); }}
@@ -148,11 +150,11 @@ function Resources({ collegeId, category, levelsCount }: { collegeId: number; ca
       ) : data.items.length === 0 ? (
         <EmptyState
           title={`لا يوجد محتوى في «${CATEGORY_LABELS[category]}»`}
-          text={level ? 'جرّب اختيار فرقة أخرى أو عرض كل الفرق.' : 'سيظهر المحتوى هنا فور إضافته من مسؤولي الكلية.'}
+          text={level ? `جرّب اختيار ${system === 1 ? 'مستوى' : 'فرقة'} أخرى أو عرض الكل.` : 'سيظهر المحتوى هنا فور إضافته من مسؤولي الكلية.'}
         />
       ) : (
         <div className={cx('grid gap-4 transition-opacity', isPlaceholderData && 'opacity-60')}>
-          {data.items.map((resource) => <ResourceCard key={resource.id} resource={resource} />)}
+          {data.items.map((resource) => <ResourceCard key={resource.id} resource={resource} system={system} />)}
           <Pagination page={data.page} pageSize={data.pageSize} total={data.total} onChange={setPage} />
         </div>
       )}
@@ -160,7 +162,7 @@ function Resources({ collegeId, category, levelsCount }: { collegeId: number; ca
   );
 }
 
-function CollegeCourses({ collegeId }: { collegeId: number }) {
+function CollegeCourses({ collegeId, system }: { collegeId: number; system: number }) {
   const { data, isPending, isError, refetch } = useQuery({
     queryKey: ['courses', collegeId, currentAcademicYear()],
     queryFn: () => api<Course[]>(`/api/colleges/${collegeId}/courses${toQuery({ academicYear: currentAcademicYear() })}`),
@@ -179,7 +181,7 @@ function CollegeCourses({ collegeId }: { collegeId: number }) {
       </div>
       {levels.map((level) => (
         <section key={level}>
-          <h3 className="mb-3 text-lg font-black">{levelLabel(level)}</h3>
+          <h3 className="mb-3 text-lg font-black">{levelLabel(level, system)}</h3>
           <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
             {data.filter((c) => c.level === level).map((course) => (
               <Link key={course.id} to={`/courses/${course.id}`} className="group rounded-2xl border border-ink-200 bg-white p-4 shadow-card transition hover:-translate-y-0.5 hover:border-brand-300">
@@ -188,7 +190,7 @@ function CollegeCourses({ collegeId }: { collegeId: number }) {
                   <div className="min-w-0">
                     <p className="font-extrabold group-hover:text-brand-700">{course.name}</p>
                     <p className="text-xs font-semibold text-ink-500">
-                      {[course.code, course.term > 0 ? TERMS[course.term] : null, course.instructor].filter(Boolean).join(' · ')}
+                      {[course.code, course.term > 0 ? TERMS[course.term] : null, course.kind ? COURSE_KIND_LABELS[course.kind] : null, course.creditHours ? `${course.creditHours} ساعات` : null, course.department, course.instructor].filter(Boolean).join(' · ')}
                     </p>
                   </div>
                 </div>
@@ -281,8 +283,8 @@ export function CollegeDetailPage() {
           ))}
         </div>
 
-        {tab.category ? <Resources key={tab.key} collegeId={collegeId} category={tab.category} levelsCount={college.levelsCount} />
-          : tab.key === 'courses' ? <CollegeCourses collegeId={collegeId} /> : <CollegePosts collegeId={collegeId} />}
+        {tab.category ? <Resources key={tab.key} collegeId={collegeId} category={tab.category} levelsCount={college.levelsCount} system={college.studySystem ?? 0} />
+          : tab.key === 'courses' ? <CollegeCourses collegeId={collegeId} system={college.studySystem ?? 0} /> : <CollegePosts collegeId={collegeId} />}
         <AdSlot placement="Content" className="mt-10" wide />
       </div>
     </>
@@ -298,6 +300,8 @@ export function CourseDetailPage() {
     queryKey: ['course', id], queryFn: () => api<Course>(`/api/courses/${id}`),
     retry: (count, err) => (err as ApiError).status !== 404 && count < 2,
   });
+  const collegeList = useQuery({ queryKey: ['colleges'], queryFn: () => api<College[]>('/api/colleges'), staleTime: 300_000 });
+  const system = collegeList.data?.find((x) => x.id === course.data?.collegeId)?.studySystem ?? 0;
   const resources = useQuery({
     queryKey: ['resources', 'course', id, category, page],
     queryFn: () => api<Paged<Resource>>(`/api/resources${toQuery({ collegeId: course.data!.collegeId, courseId: id, category: category || undefined, page, pageSize: 10 })}`),
@@ -319,11 +323,18 @@ export function CourseDetailPage() {
   const c = course.data;
   return (
     <>
-      <PageHeader title={c.name} subtitle={[c.collegeName, levelLabel(c.level), c.term > 0 ? TERMS[c.term] : null, c.code].filter(Boolean).join(' · ')}>
+      <PageHeader title={c.name} subtitle={[c.collegeName, levelLabel(c.level, system), c.term > 0 ? TERMS[c.term] : null, c.code].filter(Boolean).join(' · ')}>
         <Link to={`/colleges/${c.collegeId}?tab=courses`} className="absolute top-4 flex items-center gap-1 text-sm font-bold text-ink-300 hover:text-white">
           <ArrowRight className="size-4" /> مقررات الكلية
         </Link>
         {c.instructor && <p className="mt-3 flex items-center gap-1.5 text-ink-300"><UserRound className="size-4 text-gold-300" /> {c.instructor}</p>}
+        <p className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-sm font-bold text-ink-300">
+          {c.department && <span>{c.department}</span>}
+          {c.kind > 0 && <span>{COURSE_KIND_LABELS[c.kind]}</span>}
+          {c.creditHours ? <span>{c.creditHours} ساعات</span> : null}
+          {c.language && <span>{c.language}</span>}
+          {c.prerequisite && <span>المتطلب السابق: {c.prerequisite}</span>}
+        </p>
       </PageHeader>
       <div className="container-page py-8">
         {c.description && <p className="mb-6 max-w-3xl whitespace-pre-line text-lg leading-8 text-ink-700">{c.description}</p>}

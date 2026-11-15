@@ -9,14 +9,15 @@ import { api, fetchBlobUrl, mediaUrl, toQuery, type ApiError } from '../../lib/a
 import { useAuth } from '../../lib/auth';
 import {
   AD_PLACEMENT_LABELS, AD_REQUEST_STATUS_LABELS, COMPETITION_CATEGORY_LABELS, COMPETITION_FORMAT_LABELS, COMPETITION_MODE_LABELS,
-  FEEDBACK_KIND_LABELS, FEEDBACK_STATUS_LABELS, FEEDBACK_TOPIC_LABELS, TERMS, academicYearLabel, currentAcademicYear, currentTerm,
-  formatDate, formatDateTime, formatNumber, fromLocalInput, levelLabel, levelOptions, toLocalInput,
+  COURSE_KIND_LABELS, COURSE_LANGUAGES, FEEDBACK_KIND_LABELS, FEEDBACK_STATUS_LABELS, FEEDBACK_TOPIC_LABELS, TERMS, academicYearLabel, currentAcademicYear, currentTerm,
+  formatDate, formatDateTime, formatNumber, fromLocalInput, levelLabel, levelOptions, levelWord, toLocalInput,
 } from '../../lib/format';
 import { MAX_PICKED_IMAGE } from '../../lib/images';
 import type {
   AdAdmin, AdPlacement, AdRequest, AdRequestStatus, Competition, CompetitionCategory, CompetitionEntry, CompetitionFormat,
   CompetitionListItem, CompetitionMode, Course, FeedbackItem, FeedbackKind, FeedbackStatus, FeedbackTopic, Paged,
 } from '../../lib/types';
+import { DepartmentPicker, DepartmentsManager } from '../../components/Departments';
 import { AdminTitle } from './AdminLayout';
 import { useManagedColleges } from './Content';
 
@@ -41,7 +42,11 @@ function CollegePicker({ value, onChange, allowUniversity, label = 'الكلية
 // Courses
 // ======================================================================
 
-type CourseFormState = { collegeId: string; name: string; code: string; level: string; term: string; department: string; instructor: string; description: string; isPublished: boolean };
+type CourseFormState = {
+  collegeId: string; name: string; code: string; level: string; term: string; department: string; instructor: string; description: string; isPublished: boolean;
+  kind: string; creditHours: string; prerequisite: string; language: string;
+};
+const COURSE_EXTRAS = { kind: '0', creditHours: '', prerequisite: '', language: '' };
 
 /** Last year's courses for the same level and term: tick to copy, or click one to fill the form. */
 function CourseSuggestions({ collegeId, year, level, term, onPick, onCopied }: {
@@ -94,10 +99,13 @@ export function AdminCourses() {
   const [term, setTerm] = useState(currentTerm());
   const [editing, setEditing] = useState<Course | 'new' | null>(null);
   const [removing, setRemoving] = useState<Course | null>(null);
-  const [form, setForm] = useState<CourseFormState>({ collegeId: '', name: '', code: '', level: '1', term: '1', department: '', instructor: '', description: '', isPublished: true });
+  const [form, setForm] = useState<CourseFormState>({ collegeId: '', name: '', code: '', level: '1', term: '1', department: '', instructor: '', description: '', isPublished: true, ...COURSE_EXTRAS });
+  const [managingDepartments, setManagingDepartments] = useState(false);
   const effectiveCollege = hasRole('UniversityAdmin') ? Number(collegeId) || null : user?.collegeId ?? null;
   const formCollege = hasRole('UniversityAdmin') ? Number(form.collegeId) || null : user?.collegeId ?? null;
-  const levelsCount = colleges.data?.find((c) => c.id === (editing ? formCollege : effectiveCollege))?.levelsCount ?? 7;
+  const activeCollege = colleges.data?.find((c) => c.id === (editing ? formCollege : effectiveCollege));
+  const levelsCount = activeCollege?.levelsCount ?? 7;
+  const system = activeCollege?.studySystem ?? 0;
   const list = useQuery({
     queryKey: ['admin', 'courses', collegeId || null, year, level, term],
     queryFn: () => api<Course[]>(`/api/admin/courses${toQuery({ collegeId: collegeId || undefined, academicYear: year, level: level || undefined, term: term || undefined })}`),
@@ -108,17 +116,21 @@ export function AdminCourses() {
   const open = (course: Course | 'new') => {
     save.reset();
     setForm(course === 'new'
-      ? { collegeId, name: '', code: '', level: String(level || 1), term: String(term || 1), department: '', instructor: '', description: '', isPublished: true }
+      ? { collegeId, name: '', code: '', level: String(level || 1), term: String(term || 1), department: '', instructor: '', description: '', isPublished: true, ...COURSE_EXTRAS }
       : { collegeId: String(course.collegeId), name: course.name, code: course.code ?? '', level: String(course.level), term: String(course.term),
-          department: course.department ?? '', instructor: course.instructor ?? '', description: course.description ?? '', isPublished: course.isPublished });
+          department: course.department ?? '', instructor: course.instructor ?? '', description: course.description ?? '', isPublished: course.isPublished,
+          kind: String(course.kind ?? 0), creditHours: course.creditHours ? String(course.creditHours) : '', prerequisite: course.prerequisite ?? '', language: course.language ?? '' });
     setEditing(course);
   };
-  const fillFrom = (c: Course) => setForm((f) => ({ ...f, name: c.name, code: c.code ?? '', instructor: c.instructor ?? '', department: c.department ?? '', description: c.description ?? '' }));
+  const fillFrom = (c: Course) => setForm((f) => ({ ...f, name: c.name, code: c.code ?? '', instructor: c.instructor ?? '', department: c.department ?? '', description: c.description ?? '',
+    kind: String(c.kind ?? 0), creditHours: c.creditHours ? String(c.creditHours) : '', prerequisite: c.prerequisite ?? '', language: c.language ?? '' }));
   const save = useMutation({
     mutationFn: () => {
       const body = { ...form, academicYear: editing === 'new' ? year : (editing as Course).academicYear, collegeId: form.collegeId ? Number(form.collegeId) : null,
         level: Number(form.level), term: Number(form.term), code: form.code.trim() || null, department: form.department.trim() || null,
-        instructor: form.instructor.trim() || null, description: form.description.trim() || null };
+        instructor: form.instructor.trim() || null, description: form.description.trim() || null,
+        kind: Number(form.kind), creditHours: form.creditHours ? Number(form.creditHours) : null,
+        prerequisite: form.prerequisite.trim() || null, language: form.language.trim() || null };
       return editing === 'new' ? api('/api/admin/courses', { method: 'POST', body }) : api(`/api/admin/courses/${(editing as Course).id}`, { method: 'PUT', body });
     },
     onSuccess: () => { toast('تم حفظ المقرر.'); setEditing(null); refresh(); },
@@ -133,19 +145,22 @@ export function AdminCourses() {
   return (
     <>
       <AdminTitle title="المقررات" subtitle="مقررات كل عام جامعي وفرقة وترم. عند إضافة مقررات عام جديد تظهر لك مقررات العام السابق لنفس الفرقة والترم لتضيفها بضغطة."
-        action={<Button onClick={() => open('new')}><Plus className="size-4" /> مقرر جديد</Button>} />
+        action={<div className="flex flex-wrap gap-2">
+          {effectiveCollege && hasRole('CollegeAdmin') && <Button variant="outline" onClick={() => setManagingDepartments(true)}>الأقسام والشعب</Button>}
+          <Button onClick={() => open('new')}><Plus className="size-4" /> مقرر جديد</Button>
+        </div>} />
       <Card className="mb-4 grid gap-3 p-4 sm:grid-cols-2 lg:grid-cols-4">
         {hasRole('UniversityAdmin') && <CollegePicker value={collegeId} onChange={setCollegeId} label="الكلية" />}
         <Select label="العام الجامعي" value={year} onChange={(e) => setYear(Number(e.target.value))}>
           {years.map((y) => <option key={y} value={y}>{academicYearLabel(y)}{y === currentAcademicYear() ? ' (الحالي)' : ''}</option>)}
         </Select>
-        <Select label="الفرقة" value={level} onChange={(e) => setLevel(Number(e.target.value))}>
-          <option value={0}>كل الفرق</option>
-          {levelOptions(levelsCount).map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
+        <Select label={levelWord(system)} value={level} onChange={(e) => setLevel(Number(e.target.value))}>
+          <option value={0}>{levelLabel(0, system)}</option>
+          {levelOptions(levelsCount, system).map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
         </Select>
         <Select label="الترم" value={term} onChange={(e) => setTerm(Number(e.target.value))}>
           <option value={0}>كل الترمات</option>
-          {[1, 2, 3].map((t) => <option key={t} value={t}>{TERMS[t]}</option>)}
+          {[1, 2, 3, 4].map((t) => <option key={t} value={t}>{TERMS[t]}</option>)}
         </Select>
       </Card>
       {(!hasRole('UniversityAdmin') || collegeId) && level > 0 && term > 0 && (
@@ -158,14 +173,14 @@ export function AdminCourses() {
         <div className="grid gap-6">
           {levels.map((lv) => (
             <section key={lv}>
-              <h2 className="mb-2 font-black">{levelLabel(lv)}</h2>
+              <h2 className="mb-2 font-black">{levelLabel(lv, system)}</h2>
               <div className="grid gap-2 md:grid-cols-2">
                 {list.data.filter((c) => c.level === lv).map((course) => (
                   <Card key={course.id} className="flex items-center gap-3 p-4">
                     <div className="min-w-0 flex-1">
                       <p className="truncate font-extrabold">{course.name} {!course.isPublished && <Badge tone="amber">مخفي</Badge>}</p>
                       <p className="truncate text-sm text-ink-500">
-                        {[course.code, course.term ? TERMS[course.term] : null, course.instructor, hasRole('UniversityAdmin') ? course.collegeName : null].filter(Boolean).join(' · ')}
+                        {[course.code, course.term ? TERMS[course.term] : null, course.kind ? COURSE_KIND_LABELS[course.kind] : null, course.creditHours ? `${course.creditHours} ساعات` : null, course.department, course.instructor, hasRole('UniversityAdmin') ? course.collegeName : null].filter(Boolean).join(' · ')}
                       </p>
                       <p className="text-xs font-bold text-ink-400">{formatNumber(course.resourcesCount)} عنصر</p>
                     </div>
@@ -184,12 +199,12 @@ export function AdminCourses() {
         <form className="grid gap-4 sm:grid-cols-2" onSubmit={(e: FormEvent) => { e.preventDefault(); save.mutate(); }}>
           {save.error && <div className="sm:col-span-2"><Alert>{(save.error as ApiError).message}</Alert></div>}
           {editing === 'new' && <div className="sm:col-span-2"><CollegePicker value={form.collegeId} onChange={(v) => setForm((f) => ({ ...f, collegeId: v }))} /></div>}
-          <Select label="الفرقة" value={form.level} onChange={(e) => setForm((f) => ({ ...f, level: e.target.value }))}>
-            <option value="0">كل الفرق</option>
-            {levelOptions(levelsCount).map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
+          <Select label={levelWord(system)} value={form.level} onChange={(e) => setForm((f) => ({ ...f, level: e.target.value }))}>
+            <option value="0">{levelLabel(0, system)}</option>
+            {levelOptions(levelsCount, system).map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
           </Select>
           <Select label="الترم" value={form.term} onChange={(e) => setForm((f) => ({ ...f, term: e.target.value }))}>
-            {[1, 2, 3].map((t) => <option key={t} value={t}>{TERMS[t]}</option>)}
+            {[1, 2, 3, 4].map((t) => <option key={t} value={t}>{TERMS[t]}</option>)}
           </Select>
           {editing === 'new' && (
             <CourseSuggestions collegeId={formCollege} year={year} level={Number(form.level)} term={Number(form.term)} onPick={fillFrom} onCopied={() => { setEditing(null); refresh(); }} />
@@ -198,12 +213,25 @@ export function AdminCourses() {
             hint={editing === 'new' ? 'مقرر جديد لم يُدرَّس من قبل؟ اكتب اسمه مباشرة.' : undefined} /></div>
           <Input label="كود المقرر" dir="ltr" maxLength={30} value={form.code} onChange={(e) => setForm((f) => ({ ...f, code: e.target.value }))} hint="اختياري — مثل CS201" />
           <Input label="أستاذ المقرر" maxLength={120} value={form.instructor} onChange={(e) => setForm((f) => ({ ...f, instructor: e.target.value }))} hint="اختياري" />
-          <div className="sm:col-span-2"><Input label="القسم / الشعبة" maxLength={120} value={form.department} onChange={(e) => setForm((f) => ({ ...f, department: e.target.value }))} hint="اختياري" /></div>
+          <div className="sm:col-span-2"><DepartmentPicker collegeId={formCollege} value={form.department} onChange={(department) => setForm((f) => ({ ...f, department }))} /></div>
+          <Select label="نوع المقرر" value={form.kind} onChange={(e) => setForm((f) => ({ ...f, kind: e.target.value }))}>
+            {Object.entries(COURSE_KIND_LABELS).map(([key, label]) => <option key={key} value={key}>{label}</option>)}
+          </Select>
+          <Select label={system === 1 ? 'الساعات المعتمدة' : 'عدد الساعات الأسبوعية'} value={form.creditHours} onChange={(e) => setForm((f) => ({ ...f, creditHours: e.target.value }))}>
+            <option value="">غير محدد</option>
+            {[1, 2, 3, 4, 5, 6].map((n) => <option key={n} value={n}>{n}</option>)}
+          </Select>
+          <Select label="لغة التدريس" value={form.language} onChange={(e) => setForm((f) => ({ ...f, language: e.target.value }))}>
+            <option value="">غير محدد</option>
+            {COURSE_LANGUAGES.map((l) => <option key={l} value={l}>{l}</option>)}
+          </Select>
+          <Input label="المتطلب السابق" maxLength={150} value={form.prerequisite} onChange={(e) => setForm((f) => ({ ...f, prerequisite: e.target.value }))} hint="اختياري — اسم أو كود المقرر" />
           <div className="sm:col-span-2"><Textarea label="وصف المقرر" maxLength={3000} value={form.description} onChange={(e) => setForm((f) => ({ ...f, description: e.target.value }))} /></div>
           <div className="sm:col-span-2"><Checkbox checked={form.isPublished} onChange={(e) => setForm((f) => ({ ...f, isPublished: e.target.checked }))} label="ظاهر للطلاب" /></div>
           <div className="flex gap-2 sm:col-span-2"><Button type="submit" loading={save.isPending}>حفظ</Button><Button variant="ghost" onClick={() => setEditing(null)}>إلغاء</Button></div>
         </form>
       </Modal>
+      <DepartmentsManager open={managingDepartments} onClose={() => setManagingDepartments(false)} collegeId={effectiveCollege} collegeName={activeCollege?.name ?? ''} />
       <ConfirmDialog open={!!removing} title="حذف المقرر" message={`سيُحذف «${removing?.name ?? ''}». المحتوى المرفوع تحته لن يُحذف وسيبقى في صفحة الكلية.`}
         confirmLabel="حذف" loading={remove.isPending} onConfirm={() => removing && remove.mutate(removing.id)} onClose={() => setRemoving(null)} />
     </>

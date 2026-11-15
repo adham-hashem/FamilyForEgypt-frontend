@@ -7,7 +7,7 @@ import { PageHeader } from '../components/Layout';
 import { Badge, EmptyState, ErrorState, Pagination, cx, useToast } from '../components/ui';
 import { api, mediaUrl, toQuery } from '../lib/api';
 import {
-  CATEGORY_LABELS, DUE_LABELS, TERMS, academicYearLabel, currentAcademicYear, currentTerm, formatDateTime, formatNumber, levelOptions,
+  CATEGORY_LABELS, COURSE_KIND_LABELS, DUE_LABELS, TERMS, academicYearLabel, currentAcademicYear, currentTerm, formatDateTime, formatNumber, levelOptions, levelWord,
 } from '../lib/format';
 import type { College, Course, Paged, Resource, ResourceCategory } from '../lib/types';
 import { ResourceCard } from './Colleges';
@@ -144,13 +144,26 @@ function Upcoming({ filter }: { filter: Filter }) {
 }
 
 function Courses({ filter }: { filter: Filter }) {
-  const { data, isPending } = useQuery({
+  const [department, setDepartment] = useState('');
+  const { data: all, isPending } = useQuery({
     queryKey: ['education', 'courses', filter],
     queryFn: () => api<Course[]>(`/api/colleges/${filter.college}/courses${toQuery({ academicYear: filter.year, level: filter.level, term: filter.term })}`),
   });
+  const departments = [...new Set((all ?? []).map((c) => c.department).filter((d): d is string => !!d))];
+  const data = department ? all?.filter((c) => c.department === department) : all;
   return (
     <section>
       <h2 className="mb-3 text-lg font-black">المقررات {data && data.length > 0 && <span className="text-sm font-bold text-ink-500">({formatNumber(data.length)})</span>}</h2>
+      {departments.length > 1 && (
+        <div className="-mx-4 mb-3 flex gap-2 overflow-x-auto px-4 pb-1 sm:mx-0 sm:px-0" aria-label="القسم">
+          {['', ...departments].map((d) => (
+            <button key={d || 'all'} onClick={() => setDepartment(d)} aria-pressed={department === d}
+              className={cx('shrink-0 rounded-full border px-3.5 py-1.5 text-sm font-bold transition', department === d ? 'border-brand-600 bg-brand-600 text-white' : 'border-ink-300 bg-white text-ink-700 hover:border-ink-500')}>
+              {d || 'كل الأقسام'}
+            </button>
+          ))}
+        </div>
+      )}
       {isPending ? <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">{Array.from({ length: 3 }, (_, i) => <div key={i} className="skeleton h-24" />)}</div>
         : !data || data.length === 0 ? <p className="rounded-2xl border border-dashed border-ink-300 p-5 text-center text-ink-500">لم تُضف مقررات لهذا الاختيار بعد.</p>
         : (
@@ -161,7 +174,7 @@ function Courses({ filter }: { filter: Filter }) {
                   <span className="grid size-11 shrink-0 place-items-center rounded-xl bg-brand-50 text-brand-600"><BookOpen className="size-5" /></span>
                   <div className="min-w-0">
                     <p className="font-extrabold group-hover:text-brand-700">{course.name}</p>
-                    <p className="text-xs font-semibold text-ink-500">{[course.code, course.instructor, course.department].filter(Boolean).join(' · ')}</p>
+                    <p className="text-xs font-semibold text-ink-500">{[course.code, course.kind ? COURSE_KIND_LABELS[course.kind] : null, course.creditHours ? `${course.creditHours} ساعات` : null, course.instructor, course.department].filter(Boolean).join(' · ')}</p>
                   </div>
                 </div>
                 <p className="mt-3 text-sm font-bold text-ink-600">{formatNumber(course.resourcesCount)} عنصر</p>
@@ -296,12 +309,12 @@ export default function Education() {
                       {(years.data ?? [full.year]).map((y) => <option key={y} value={y}>{academicYearLabel(y)}{y === currentAcademicYear() ? ' (الحالي)' : ''}</option>)}
                     </select>
                   </label>
-                  <Segmented label="الفرقة" options={levelOptions(college.levelsCount)} value={full.level} onChange={(level) => update({ level })} />
+                  <Segmented label={levelWord(college.studySystem)} options={levelOptions(college.levelsCount, college.studySystem)} value={full.level} onChange={(level) => update({ level })} />
                   <Segmented label="الترم" options={[1, 2, 3].map((t) => ({ value: t, label: TERMS[t] }))} value={full.term} onChange={(term) => update({ term })} />
                 </div>
                 <div className="mt-3 flex flex-wrap items-center gap-2 text-sm">
                   <Badge tone="dark"><Check className="size-3.5" /> {college.name}</Badge>
-                  <Badge tone="brand">{levelOptions(college.levelsCount)[full.level - 1]?.label}</Badge>
+                  <Badge tone="brand">{levelOptions(college.levelsCount, college.studySystem)[full.level - 1]?.label}</Badge>
                   <Badge tone="gold">{TERMS[full.term]} · {academicYearLabel(full.year)}</Badge>
                   <button onClick={() => void share()} className="ms-auto flex items-center gap-1 font-bold text-brand-700 hover:underline"><Link2 className="size-4" /> نسخ رابط الاختيار</button>
                 </div>

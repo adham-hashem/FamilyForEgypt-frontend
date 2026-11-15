@@ -2,7 +2,7 @@ export type UserRole = 'Student' | 'CollegeEditor' | 'CollegeAdmin' | 'Universit
 export type PostType = 'News' | 'Event' | 'Announcement';
 export type PostStatus = 'Draft' | 'Published';
 export type ResourceCategory =
-  | 'Schedule' | 'ExamSchedule' | 'Lecture' | 'Tutorial' | 'Summary' | 'Assignment' | 'EducationalEvent' | 'Material' | 'Other';
+  | 'Schedule' | 'ExamSchedule' | 'Lecture' | 'Tutorial' | 'Summary' | 'Assignment' | 'EducationalEvent' | 'Material' | 'PastExam' | 'Other';
 export type ApplicationStatus = 'Pending' | 'Approved' | 'Rejected' | 'NeedsChanges';
 export type LeaderSlot = 'President' | 'UniversityPresident' | 'Other';
 
@@ -44,6 +44,8 @@ export interface College {
   sortOrder: number;
   /** Years of study in the college (4 for most, 5 for engineering, up to 7). */
   levelsCount: number;
+  /** 0 = yearly system (الفرقة), 1 = credit hours (المستوى). */
+  studySystem: number;
 }
 
 export interface CollegeDetail {
@@ -121,6 +123,8 @@ export interface Resource {
   dueAt: string | null;
   /** The academic year by its first calendar year (2026 is 2026/2027); null when not tied to a year. */
   academicYear: number | null;
+  /** The lecture or week number. */
+  sequence: number | null;
 }
 
 export interface Leader {
@@ -296,6 +300,11 @@ export interface Course {
   updatedAt: string;
   /** By its first calendar year: 2026 is 2026/2027. */
   academicYear: number;
+  /** 0 unspecified, 1 required, 2 elective, 3 university requirement, 4 college requirement. */
+  kind: number;
+  creditHours: number | null;
+  prerequisite: string | null;
+  language: string | null;
 }
 
 // ---------- advertising ----------
@@ -464,3 +473,5 @@ export interface CompetitionEntry {
   rank: number | null;
   createdAt: string;
 }
+
+export interface Department { id: number; collegeId: number; name: string; kind: number; sortOrder: number }

@@ -9,7 +9,7 @@ import { api, mediaUrl, toQuery, type ApiError } from '../../lib/api';
 import { MAX_PICKED_IMAGE } from '../../lib/images';
 import { useAuth } from '../../lib/auth';
 import {
-  CATEGORY_LABELS, DUE_LABELS, LEVELS, POST_TYPE_LABELS, TERMS, formatDate, formatSize, fromLocalInput, levelLabel, toLocalInput,
+  CATEGORY_LABELS, DUE_LABELS, LEVELS, POST_TYPE_LABELS, TERMS, academicYearLabel, currentAcademicYear, formatDate, formatSize, fromLocalInput, levelLabel, toLocalInput,
 } from '../../lib/format';
 import type { College, Course, Paged, PostDetail, PostImage, PostListItem, PostType, Resource, ResourceCategory, ResourceFile } from '../../lib/types';
 import { AdminTitle } from './AdminLayout';
@@ -492,12 +492,13 @@ function ResourceForm({ resource }: { resource: Resource | null }) {
     isPublished: resource?.isPublished ?? true,
     courseId: resource?.courseId ? String(resource.courseId) : '',
     dueAt: toLocalInput(resource?.dueAt ?? null),
+    academicYear: String(resource ? resource.academicYear ?? '' : currentAcademicYear()),
   });
   const { user } = useAuth();
   const collegeForCourses = resource ? resource.collegeId : hasRole('UniversityAdmin') ? Number(form.collegeId) || null : user?.collegeId ?? null;
   const courses = useQuery({
-    queryKey: ['admin', 'courses', collegeForCourses],
-    queryFn: () => api<Course[]>(`/api/admin/courses${toQuery({ collegeId: collegeForCourses })}`),
+    queryKey: ['admin', 'courses', collegeForCourses, form.academicYear],
+    queryFn: () => api<Course[]>(`/api/admin/courses${toQuery({ collegeId: collegeForCourses, academicYear: form.academicYear || undefined })}`),
     enabled: !!collegeForCourses,
   });
   const dueLabel = DUE_LABELS[form.category];
@@ -537,10 +538,11 @@ function ResourceForm({ resource }: { resource: Resource | null }) {
     mutationFn: () => {
       const body = new FormData();
       for (const [key, value] of Object.entries(form)) {
-        if (key === 'dueAt' || key === 'courseId') continue;
+        if (key === 'dueAt' || key === 'courseId' || key === 'academicYear') continue;
         body.append(key, typeof value === 'string' ? value.trim() : String(value));
       }
       if (form.courseId) body.append('courseId', form.courseId);
+      if (form.academicYear) body.append('academicYear', form.academicYear);
       if (form.dueAt) body.append('dueAt', fromLocalInput(form.dueAt) ?? '');
       kept.forEach((file) => body.append('keepFileIds', file.id));
       added.forEach((file) => body.append('files', file));
@@ -570,6 +572,12 @@ function ResourceForm({ resource }: { resource: Resource | null }) {
             {TERMS.slice(1).map((name, i) => <option key={name} value={i + 1}>{name}</option>)}
           </Select>
           <Input label="القسم / البرنامج" maxLength={120} value={form.department} onChange={(e) => setForm((f) => ({ ...f, department: e.target.value }))} hint="اختياري" />
+          <Select label="العام الجامعي" value={form.academicYear} disabled={!!form.courseId}
+            onChange={(e) => setForm((f) => ({ ...f, academicYear: e.target.value, courseId: '' }))}
+            hint={form.courseId ? 'يُؤخذ من المقرر المختار.' : 'اختر «غير مرتبط بعام» للمحتوى الذي يصلح لكل الأعوام.'}>
+            <option value="">غير مرتبط بعام</option>
+            {Array.from({ length: 6 }, (_, i) => currentAcademicYear() + 1 - i).map((y) => <option key={y} value={y}>{academicYearLabel(y)}</option>)}
+          </Select>
           <Select label="المقرر" value={form.courseId} disabled={!collegeForCourses || courses.isPending}
             onChange={(e) => {
               const course = courses.data?.find((c) => String(c.id) === e.target.value);

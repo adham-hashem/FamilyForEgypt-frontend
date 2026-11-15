@@ -7,7 +7,8 @@ import { FlagName, withFlagName } from './FlagName';
 
 const NAV = [
   { to: '/', label: 'الرئيسية', end: true },
-  { to: '/activities', label: 'الأنشطة والفعاليات' },
+  { to: '/activities', label: 'الأنشطة' },
+  { to: '/education', label: 'العملية التعليمية' },
   { to: '/competitions', label: 'المسابقات' },
   { to: '/colleges', label: 'الكليات' },
   { to: '/about', label: 'عن الأسرة' },
@@ -22,7 +23,7 @@ function Header() {
   useEffect(() => setOpen(false), [location.pathname]);
 
   const navClass = ({ isActive }: { isActive: boolean }) =>
-    cx('rounded-lg px-3 py-2 text-[15px] font-bold transition', isActive ? 'bg-white/10 text-white' : 'text-ink-300 hover:text-white');
+    cx('whitespace-nowrap rounded-lg px-2 py-2 text-[14px] font-bold transition xl:px-3 xl:text-[15px]', isActive ? 'bg-white/10 text-white' : 'text-ink-300 hover:text-white');
 
   return (
     <header className="sticky top-0 z-40 bg-ink-900/95 text-white backdrop-blur supports-[backdrop-filter]:bg-ink-900/85">
@@ -35,7 +36,7 @@ function Header() {
           </span>
         </Link>
 
-        <nav className="hidden items-center gap-1 lg:flex" aria-label="التنقل الرئيسي">
+        <nav className="hidden items-center gap-0.5 lg:flex xl:gap-1" aria-label="التنقل الرئيسي">
           {NAV.map((item) => (
             <NavLink key={item.to} to={item.to} end={item.end} className={navClass}>{item.label}</NavLink>
           ))}

@@ -45,6 +45,8 @@ export interface College {
   logoThumbUrl: string | null;
   isActive: boolean;
   sortOrder: number;
+  /** Years of study in the college (4 for most, 5 for engineering, up to 7). */
+  levelsCount: number;
 }
 
 export interface CollegeDetail {
@@ -120,6 +122,8 @@ export interface Resource {
   courseId: number | null;
   /** Deadline of an assignment, or the date of an exam or an educational event. */
   dueAt: string | null;
+  /** The academic year by its first calendar year (2026 is 2026/2027); null when not tied to a year. */
+  academicYear: number | null;
 }
 
 export interface Leader {
@@ -293,6 +297,8 @@ export interface Course {
   isPublished: boolean;
   resourcesCount: number;
   updatedAt: string;
+  /** By its first calendar year: 2026 is 2026/2027. */
+  academicYear: number;
 }
 
 // ---------- advertising ----------

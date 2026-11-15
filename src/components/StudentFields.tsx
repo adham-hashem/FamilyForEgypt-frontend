@@ -1,7 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { useState } from 'react';
 import { api } from '../lib/api';
-import { LEVELS, normalizeDigits } from '../lib/format';
+import { levelOptions, normalizeDigits } from '../lib/format';
 import type { College } from '../lib/types';
 import { Input, Select } from './ui';
 
@@ -61,7 +61,7 @@ export function StudentFields({ state, touched, askPhone }: {
       </Select>
       <Select label="الفرقة" required value={info.level} onChange={set('level')} error={show('level')}>
         <option value="">اختر الفرقة</option>
-        {LEVELS.map((name, i) => <option key={name} value={i + 1}>الفرقة {name}</option>)}
+        {levelOptions(colleges.data?.find((c) => String(c.id) === info.collegeId)?.levelsCount ?? 7).map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
       </Select>
       <Input label="القسم / الشعبة" value={info.department} onChange={set('department')} hint="اختياري" />
       {askPhone && (

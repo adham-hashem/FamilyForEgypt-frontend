@@ -7,7 +7,9 @@ import { PageHeader } from '../components/Layout';
 import { PostGrid, PostGridSkeleton } from '../components/PostCard';
 import { Badge, EmptyState, ErrorState, LinkButton, PageLoader, Pagination, cx } from '../components/ui';
 import { api, mediaUrl, toQuery, type ApiError } from '../lib/api';
-import { CATEGORY_LABELS, DUE_LABELS, LEVELS, TERMS, formatDate, formatDateTime, formatNumber, formatSize, levelLabel } from '../lib/format';
+import {
+  CATEGORY_LABELS, DUE_LABELS, LEVELS, TERMS, academicYearLabel, currentAcademicYear, formatDate, formatDateTime, formatNumber, formatSize, levelLabel,
+} from '../lib/format';
 import type { College, CollegeDetail, Course, Paged, Resource, ResourceCategory } from '../lib/types';
 import { CollegeTile } from './Home';
 import { usePostList } from './Posts';
@@ -116,7 +118,7 @@ export function ResourceCard({ resource, showCategory }: { resource: Resource; s
   );
 }
 
-function Resources({ collegeId, category }: { collegeId: number; category: ResourceCategory }) {
+function Resources({ collegeId, category, levelsCount }: { collegeId: number; category: ResourceCategory; levelsCount: number }) {
   const [level, setLevel] = useState(0);
   const [page, setPage] = useState(1);
   const { data, isPending, isError, refetch, isPlaceholderData } = useQuery({
@@ -128,7 +130,7 @@ function Resources({ collegeId, category }: { collegeId: number; category: Resou
   return (
     <div>
       <div className="-mx-4 mb-5 flex gap-2 overflow-x-auto px-4 pb-1 sm:mx-0 sm:px-0" aria-label="الفرقة الدراسية">
-        {['كل الفرق', ...LEVELS.slice(0, 5).map((name) => `الفرقة ${name}`)].map((label, index) => (
+        {['كل الفرق', ...LEVELS.slice(0, levelsCount).map((name) => `الفرقة ${name}`)].map((label, index) => (
           <button
             key={label}
             onClick={() => { setLevel(index); setPage(1); }}
@@ -160,15 +162,21 @@ function Resources({ collegeId, category }: { collegeId: number; category: Resou
 
 function CollegeCourses({ collegeId }: { collegeId: number }) {
   const { data, isPending, isError, refetch } = useQuery({
-    queryKey: ['courses', collegeId], queryFn: () => api<Course[]>(`/api/colleges/${collegeId}/courses`),
+    queryKey: ['courses', collegeId, currentAcademicYear()],
+    queryFn: () => api<Course[]>(`/api/colleges/${collegeId}/courses${toQuery({ academicYear: currentAcademicYear() })}`),
   });
   if (isPending) return <div className="grid gap-4 sm:grid-cols-2">{Array.from({ length: 4 }, (_, i) => <div key={i} className="skeleton h-28" />)}</div>;
   if (isError) return <ErrorState onRetry={() => void refetch()} />;
-  if (data.length === 0) return <EmptyState title="لم تُضف مقررات بعد" text="يضيف رائد الأسرة بالكلية المقررات ومحتواها هنا." />;
+  const hub = <LinkButton to={`/education?college=${collegeId}`} variant="outline" size="sm">تصفح حسب العام والفرقة والترم</LinkButton>;
+  if (data.length === 0) return <EmptyState title={`لم تُضف مقررات ${academicYearLabel(currentAcademicYear())} بعد`} text="يضيف رائد الأسرة بالكلية المقررات ومحتواها هنا." action={hub} />;
 
   const levels = [...new Set(data.map((c) => c.level))].sort((a, b) => (a || 99) - (b || 99));
   return (
     <div className="grid gap-8">
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <p className="font-bold text-ink-600">مقررات العام الجامعي {academicYearLabel(currentAcademicYear())}</p>
+        {hub}
+      </div>
       {levels.map((level) => (
         <section key={level}>
           <h3 className="mb-3 text-lg font-black">{levelLabel(level)}</h3>
@@ -273,7 +281,7 @@ export function CollegeDetailPage() {
           ))}
         </div>
 
-        {tab.category ? <Resources key={tab.key} collegeId={collegeId} category={tab.category} />
+        {tab.category ? <Resources key={tab.key} collegeId={collegeId} category={tab.category} levelsCount={college.levelsCount} />
           : tab.key === 'courses' ? <CollegeCourses collegeId={collegeId} /> : <CollegePosts collegeId={collegeId} />}
         <AdSlot placement="Content" className="mt-10" wide />
       </div>

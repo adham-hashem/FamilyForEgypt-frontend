@@ -7,7 +7,7 @@ import { PageHeader } from '../components/Layout';
 import { Alert, Button, Card, Checkbox, ErrorState, Input, LinkButton, Select, Textarea, cx } from '../components/ui';
 import { api, type ApiError } from '../lib/api';
 import { MAX_PICKED_IMAGE } from '../lib/images';
-import { COMMITTEES, GOVERNORATES, LEVELS, normalizeDigits } from '../lib/format';
+import { COMMITTEES, GOVERNORATES, levelOptions, normalizeDigits } from '../lib/format';
 import type { ApplicationStatusView, College } from '../lib/types';
 
 const MAX_IMAGE = MAX_PICKED_IMAGE;
@@ -201,7 +201,7 @@ function JoinForm({ existing, onSent }: { existing: ApplicationStatusView | null
         </Select>
         <Select label="الفرقة الدراسية" required value={form.level} onChange={set('level')} error={show('level')}>
           <option value="">اختر الفرقة</option>
-          {LEVELS.map((name, i) => <option key={name} value={i + 1}>الفرقة {name}</option>)}
+          {levelOptions(colleges.data?.find((c) => String(c.id) === form.collegeId)?.levelsCount ?? 7).map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
         </Select>
         <Input label="الرقم الجامعي (ID)" required dir="ltr" value={form.studentCode} onChange={(e) => setForm((f) => ({ ...f, studentCode: normalizeDigits(e.target.value) }))} error={show('studentCode')} />
         <Input label="القسم / البرنامج" value={form.department} onChange={set('department')} hint="اختياري" />

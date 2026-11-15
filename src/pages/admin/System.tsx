@@ -23,13 +23,13 @@ export function AdminColleges() {
   const { data, isPending, isError, refetch } = useManagedColleges();
   const [editing, setEditing] = useState<College | 'new' | null>(null);
   const [removing, setRemoving] = useState<College | null>(null);
-  const [form, setForm] = useState({ name: '', description: '', deanName: '', websiteUrl: '', sortOrder: '0', isActive: true });
+  const [form, setForm] = useState({ name: '', description: '', deanName: '', websiteUrl: '', sortOrder: '0', isActive: true, levelsCount: '4' });
   const [logo, setLogo] = useState<File | null>(null);
 
   const open = (college: College | 'new') => {
     setForm(college === 'new'
-      ? { name: '', description: '', deanName: '', websiteUrl: '', sortOrder: String(data?.length ?? 0), isActive: true }
-      : { name: college.name, description: college.description ?? '', deanName: college.deanName ?? '', websiteUrl: college.websiteUrl ?? '', sortOrder: String(college.sortOrder), isActive: college.isActive });
+      ? { name: '', description: '', deanName: '', websiteUrl: '', sortOrder: String(data?.length ?? 0), isActive: true, levelsCount: '4' }
+      : { name: college.name, description: college.description ?? '', deanName: college.deanName ?? '', websiteUrl: college.websiteUrl ?? '', sortOrder: String(college.sortOrder), isActive: college.isActive, levelsCount: String(college.levelsCount) });
     setLogo(null);
     save.reset();
     setEditing(college);
@@ -96,6 +96,9 @@ export function AdminColleges() {
           <ImagePicker label="شعار الكلية" file={logo} onChange={setLogo} existing={editing !== 'new' && !!(editing as College | null)?.logoUrl} />
           {isUniversity && (
             <div className="grid content-start gap-4">
+              <Select label="عدد الفرق الدراسية" value={form.levelsCount} onChange={(e) => setForm((f) => ({ ...f, levelsCount: e.target.value }))} hint="مثلاً 4، أو 5 للهندسة، أو 6–7 للطب. تظهر الفرق بناءً عليه في كل مكان.">
+                {[1, 2, 3, 4, 5, 6, 7].map((n) => <option key={n} value={n}>{n}</option>)}
+              </Select>
               <Input label="ترتيب الظهور" type="number" min={0} max={1000} value={form.sortOrder} onChange={(e) => setForm((f) => ({ ...f, sortOrder: e.target.value }))} hint="الأصغر يظهر أولاً." />
               <Checkbox checked={form.isActive} onChange={(e) => setForm((f) => ({ ...f, isActive: e.target.checked }))} label="الكلية مفعّلة وتظهر للطلاب" />
             </div>

@@ -143,3 +143,21 @@ export function normalizeDigits(value: string) {
     .replace(/[٠-٩]/g, (d) => String(d.charCodeAt(0) - 0x0660))
     .replace(/[۰-۹]/g, (d) => String(d.charCodeAt(0) - 0x06f0));
 }
+
+// ---------- the academic calendar ----------
+
+/** The academic year starts in September and is named by its first calendar year: 2026 is «2026/2027». */
+export const currentAcademicYear = (now = new Date()) => (now.getMonth() >= 8 ? now.getFullYear() : now.getFullYear() - 1);
+
+/** September to January is the first term, February to June the second, July and August the summer. */
+export const currentTerm = (now = new Date()) => {
+  const month = now.getMonth() + 1;
+  return month >= 9 || month === 1 ? 1 : month <= 6 ? 2 : 3;
+};
+
+/** Shown left to right whatever the page direction, so it always reads 2026/2027. */
+export const academicYearLabel = (year: number) => `⁦${year}/${year + 1}⁩`;
+
+/** Levels a college actually has, as "الفرقة الأولى"…; falls back to four. */
+export const levelOptions = (levelsCount: number | null | undefined) =>
+  LEVELS.slice(0, Math.min(Math.max(levelsCount ?? 4, 1), LEVELS.length)).map((name, i) => ({ value: i + 1, label: `الفرقة ${name}` }));

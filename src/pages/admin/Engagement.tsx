@@ -718,6 +718,7 @@ export function AdminAds() {
   const [editing, setEditing] = useState<AdAdmin | 'new' | null>(null);
   const [removing, setRemoving] = useState<AdAdmin | null>(null);
   const [image, setImage] = useState<File | null>(null);
+  const [missingImage, setMissingImage] = useState(false);
   const [form, setForm] = useState<AdFormState>({ title: '', advertiserName: '', description: '', linkUrl: '', placement: 'Home', startsAt: '', endsAt: '', isActive: true, sortOrder: '0', adRequestId: '' });
   const list = useQuery({ queryKey: ['admin', 'ads'], queryFn: () => api<AdAdmin[]>('/api/admin/ads') });
   const refresh = () => { void queryClient.invalidateQueries({ queryKey: ['admin', 'ads'] }); void queryClient.invalidateQueries({ queryKey: ['ads'] }); };
@@ -795,7 +796,8 @@ export function AdminAds() {
       )}
 
       <Modal open={!!editing} title={editing === 'new' ? 'إعلان جديد' : 'تعديل الإعلان'} onClose={() => setEditing(null)} wide>
-        <form className="grid gap-4 sm:grid-cols-2" onSubmit={(e) => { e.preventDefault(); save.mutate(); }}>
+        <form className="grid gap-4 sm:grid-cols-2" onSubmit={(e) => { e.preventDefault(); if (editing === 'new' && !image) { setMissingImage(true); return; } setMissingImage(false); save.mutate(); }}>
+          {missingImage && <div className="sm:col-span-2"><Alert>اختر صورة الإعلان أولاً.</Alert></div>}
           {save.error && <div className="sm:col-span-2"><Alert>{(save.error as ApiError).message}</Alert></div>}
           <Input label="عنوان الإعلان" required maxLength={150} value={form.title} onChange={(e) => setForm((f) => ({ ...f, title: e.target.value }))} />
           <Input label="المعلِن" required maxLength={150} value={form.advertiserName} onChange={(e) => setForm((f) => ({ ...f, advertiserName: e.target.value }))} />

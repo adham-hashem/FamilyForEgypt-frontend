@@ -350,6 +350,13 @@ const ACTIONS: Record<string, string> = {
   'user.suspended': 'إيقاف حساب', 'user.activated': 'تفعيل حساب', 'user.password_reset': 'إعادة تعيين كلمة مرور',
   'membership.submitted': 'تقديم طلب عضوية', 'membership.resubmitted': 'إعادة تقديم طلب', 'membership.viewed': 'الاطلاع على طلب عضوية',
   'membership.approved': 'قبول طلب عضوية', 'membership.rejected': 'رفض طلب عضوية', 'membership.needschanges': 'طلب تعديل',
+  'department.created': 'إضافة قسم أو شعبة', 'department.updated': 'تعديل قسم أو شعبة', 'department.deleted': 'حذف قسم أو شعبة',
+  'course.created': 'إضافة مقرر', 'course.updated': 'تعديل مقرر', 'course.deleted': 'حذف مقرر', 'course.copied': 'نسخ مقررات لعام جديد',
+  'study_system.created': 'إضافة نظام دراسة', 'study_system.updated': 'تعديل نظام دراسة', 'study_system.deleted': 'حذف نظام دراسة',
+  'competition.created': 'إنشاء مسابقة', 'competition.updated': 'تعديل مسابقة', 'competition.deleted': 'حذف مسابقة', 'competition.judged': 'اعتماد نتيجة مسابقة',
+  'ad.created': 'إضافة إعلان', 'ad.updated': 'تعديل إعلان', 'ad.deleted': 'حذف إعلان', 'ad_request.reviewed': 'مراجعة طلب إعلان',
+  'feedback.answered': 'الرد على اقتراح أو شكوى', 'membership.edited': 'تعديل بيانات طلب عضوية',
+  'auth.password_reset_requested': 'طلب استعادة كلمة المرور',
   'site.settings_updated': 'تعديل إعدادات الصفحة الرئيسية', 'site.leader_added': 'إضافة قيادة', 'site.leader_updated': 'تعديل قيادة',
   'site.leader_deleted': 'حذف قيادة', 'site.video_uploaded': 'رفع فيديو', 'site.banner_uploaded': 'رفع الصورة العريضة', 'site.banner_removed': 'حذف الصورة العريضة', 'site.video_removed': 'حذف الفيديو',
 };

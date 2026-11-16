@@ -124,15 +124,15 @@ const ORDINALS_F = ['الأولى', 'الثانية', 'الثالثة', 'الر�
 const ORDINALS_M = ['الأول', 'الثاني', 'الثالث', 'الرابع', 'الخامس', 'السادس', 'السابع'];
 /** The ordinals for the default word «المستوى» (masculine). */
 export const LEVELS = ORDINALS_M;
-/** What a level is called in the college's study system. «المستوى» unless the system says otherwise (e.g. «الفرقة»). */
+/** What a level is called in the college's study system. «المستوى» unless the system says otherwise (e.g. «المرحلة»). */
 export const levelWord = (system?: StudySystem | null) => system?.levelWord ?? 'المستوى';
-/** «الأولى» after a feminine word such as «الفرقة», «الأول» after a masculine one such as «المستوى». */
+/** «الأولى» after a feminine word such as «المرحلة», «الأول» after a masculine one such as «المستوى». */
 export const levelName = (level: number, system?: StudySystem | null) =>
   (levelWord(system).endsWith('ة') ? ORDINALS_F : ORDINALS_M)[level - 1] ?? String(level);
 export const levelLabel = (level: number, system?: StudySystem | null) => {
   const word = levelWord(system);
   if (level > 0) return `${word} ${levelName(level, system)}`;
-  return word === 'الفرقة' ? 'كل الفرق' : word === 'المستوى' ? 'كل المستويات' : 'الكل';
+  return word === 'المستوى' ? 'كل المستويات' : 'الكل';
 };
 export const TERMS = ['', 'الفصل الأول', 'الفصل الثاني', 'الفصل الصيفي', 'سنوي (طوال العام)'];
 

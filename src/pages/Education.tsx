@@ -17,7 +17,7 @@ const REMEMBER_KEY = 'ffe_education_filter';
 interface Filter { college: number; year: number; level: number; term: number }
 
 /** The categories listed under «كل المحتوى». Schedules have their own place at the top. */
-const CONTENT_CATEGORIES: ResourceCategory[] = ['Lecture', 'Tutorial', 'Summary', 'Assignment', 'EducationalEvent', 'Material', 'Other'];
+const CONTENT_CATEGORIES: ResourceCategory[] = ['Lecture', 'Tutorial', 'Summary', 'Assignment', 'PastExam', 'EducationalEvent', 'Material', 'Other'];
 
 function readRemembered(): Partial<Filter> {
   try {

@@ -15,6 +15,8 @@ const VIEWS = [
   { key: 'all', label: 'الكل' },
   { key: 'upcoming', label: 'فعاليات قادمة' },
   { key: 'past', label: 'فعاليات سابقة' },
+  { key: 'events', label: 'كل الفعاليات' },
+  { key: 'updates', label: 'أخبار وإعلانات' },
   { key: 'news', label: 'أخبار' },
   { key: 'announcements', label: 'إعلانات' },
 ];
@@ -23,6 +25,8 @@ function viewToParams(view: string) {
   switch (view) {
     case 'upcoming': return { when: 'upcoming' };
     case 'past': return { when: 'past' };
+    case 'events': return { type: 'Event' };
+    case 'updates': return { excludeEvents: 'true' };
     case 'news': return { type: 'News' };
     case 'announcements': return { type: 'Announcement' };
     default: return {};

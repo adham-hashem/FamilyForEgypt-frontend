@@ -31,10 +31,10 @@ function HeroSkeleton() {
 function Hero({ data }: { data: HomeData }) {
   const president = data.leaders.find((l) => l.slot === 'President');
   const stats = [
-    { icon: Building2, value: data.stats.colleges, label: 'كلية' },
-    { icon: CalendarDays, value: data.stats.events, label: 'فعالية' },
-    { icon: Newspaper, value: data.stats.posts, label: 'خبر وإعلان' },
-    { icon: Users, value: data.stats.members, label: 'عضو' },
+    { icon: Building2, value: data.stats.colleges, label: 'كلية', to: '/colleges', hint: 'تصفح كليات الجامعة' },
+    { icon: CalendarDays, value: data.stats.events, label: 'فعالية', to: '/activities?view=events', hint: 'عرض كل الفعاليات' },
+    { icon: Newspaper, value: data.stats.posts, label: 'خبر وإعلان', to: '/activities?view=updates', hint: 'عرض الأخبار والإعلانات' },
+    { icon: Users, value: data.stats.members, label: 'عضو', to: '/join', hint: 'انضم إلى الأسرة' },
   ];
 
   return (
@@ -62,15 +62,16 @@ function Hero({ data }: { data: HomeData }) {
             </LinkButton>
           </div>
 
-          <dl className="mx-auto mt-9 grid max-w-md grid-cols-4 gap-2 lg:mx-0">
-            {stats.map(({ icon: Icon, value, label }) => (
-              <div key={label} className="rounded-2xl border border-white/10 bg-white/5 px-2 py-3 text-center">
+          <nav aria-label="أرقام الأسرة" className="mx-auto mt-9 grid max-w-md grid-cols-4 gap-2 lg:mx-0">
+            {stats.map(({ icon: Icon, value, label, to, hint }) => (
+              <Link key={label} to={to} title={hint} aria-label={`${formatNumber(value)} ${label} — ${hint}`}
+                className="group rounded-2xl border border-white/10 bg-white/5 px-2 py-3 text-center transition hover:-translate-y-0.5 hover:border-gold-300/60 hover:bg-white/10 focus-visible:outline-2 focus-visible:outline-gold-300">
                 <Icon className="mx-auto size-5 text-gold-300" aria-hidden />
-                <dd className="mt-1 text-xl font-black">{formatNumber(value)}</dd>
-                <dt className="text-xs font-semibold text-ink-400">{label}</dt>
-              </div>
+                <span className="mt-1 block text-xl font-black">{formatNumber(value)}</span>
+                <span className="block text-xs font-semibold text-ink-400 group-hover:text-white">{label}</span>
+              </Link>
             ))}
-          </dl>
+          </nav>
         </div>
 
         {president && (

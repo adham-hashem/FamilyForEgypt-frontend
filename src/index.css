@@ -53,6 +53,11 @@
 }
 
 @layer base {
+  /* A grid's single column may shrink below its widest child (a row of chips, a scrolling menu), so a page never
+     grows wider than the screen. Any grid-cols-* utility still overrides this. */
+  .grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
   html {
     scroll-behavior: smooth;
     -webkit-text-size-adjust: 100%;

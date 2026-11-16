@@ -291,10 +291,10 @@ export default function Education() {
         {colleges.isPending ? <div className="skeleton h-40" /> : colleges.isError ? <ErrorState onRetry={() => void colleges.refetch()} />
           : !college ? <CollegePicker colleges={colleges.data} onPick={(id) => update({ college: id, level: 1 })} />
           : (
-            <div className="grid gap-8">
+            <div className="grid grid-cols-[minmax(0,1fr)] gap-8">
               {/* The filter stays in reach while scrolling. */}
               <div className="sticky top-[67px] z-20 -mx-4 border-b border-ink-200 bg-sand/95 px-4 py-4 backdrop-blur sm:mx-0 sm:rounded-2xl sm:border sm:bg-white/95 sm:px-5 sm:shadow-card">
-                <div className="grid gap-4 lg:grid-cols-[minmax(0,1.1fr)_auto_minmax(0,1.6fr)_auto] lg:items-end">
+                <div className="grid grid-cols-[minmax(0,1fr)] gap-4 lg:grid-cols-[minmax(0,1.1fr)_auto_minmax(0,1.6fr)_auto] lg:items-end">
                   <label>
                     <span className="mb-1.5 block text-xs font-extrabold text-ink-500">الكلية</span>
                     <select value={college.id} onChange={(e) => update({ college: Number(e.target.value) })}

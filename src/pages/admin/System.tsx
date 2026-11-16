@@ -102,9 +102,9 @@ export function AdminColleges() {
             <div className="grid content-start gap-4">
               <Select label="نظام الدراسة" value={form.studySystemId} onChange={(e) => setForm((f) => ({ ...f, studySystemId: e.target.value }))}
                 hint="يحدد التسمية في الموقع كله. لو نظام كليتك غير موجود، أضفه من «أنظمة الدراسة» أعلى الصفحة.">
-                {systems.data?.map((s) => <option key={s.id} value={s.id}>{s.name} — {s.levelWord} الأولى، الثانية…</option>)}
+                {systems.data?.map((s) => <option key={s.id} value={s.id}>{s.name} — ({s.levelWord})</option>)}
               </Select>
-              <Select label={`عدد ${systems.data?.find((s) => String(s.id) === form.studySystemId)?.levelWord === 'الفرقة' ? 'الفرق الدراسية' : 'المستويات'}`} value={form.levelsCount} onChange={(e) => setForm((f) => ({ ...f, levelsCount: e.target.value }))} hint={`المقترح لهذه الكلية: ${suggestedLevels(form.name)} (الطب 6، الهندسة والصيدلة والأسنان والبيطري 5، والباقي 4 غالباً). راجع لائحة الكلية.`}>
+              <Select label={`عدد المراحل الدراسية (${systems.data?.find((s) => String(s.id) === form.studySystemId)?.levelWord ?? 'المستوى'})`} value={form.levelsCount} onChange={(e) => setForm((f) => ({ ...f, levelsCount: e.target.value }))} hint={`المقترح لهذه الكلية: ${suggestedLevels(form.name)} (الطب 6، الهندسة والصيدلة والأسنان والبيطري 5، والباقي 4 غالباً). راجع لائحة الكلية.`}>
                 {[1, 2, 3, 4, 5, 6, 7].map((n) => <option key={n} value={n}>{n}</option>)}
               </Select>
               <Input label="ترتيب الظهور" type="number" min={0} max={1000} value={form.sortOrder} onChange={(e) => setForm((f) => ({ ...f, sortOrder: e.target.value }))} hint="الأصغر يظهر أولاً." />

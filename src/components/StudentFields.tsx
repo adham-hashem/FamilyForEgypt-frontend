@@ -23,7 +23,7 @@ export function useStudentInfo() {
     fullName: info.fullName.trim().length < 5 ? 'اكتب اسمك ثلاثياً على الأقل.' : '',
     nationalId: /^[23]\d{13}$/.test(info.nationalId) ? '' : 'الرقم القومي 14 رقماً كما في البطاقة.',
     collegeId: info.collegeId ? '' : 'اختر الكلية.',
-    level: info.level ? '' : 'اختر الفرقة.',
+    level: info.level ? '' : 'اختر المستوى.',
     phone: !info.phone || /^01[0125]\d{8}$/.test(info.phone) ? '' : 'رقم الموبايل غير صحيح.',
   };
   const valid = Object.values(errors).every((e) => !e);
@@ -59,9 +59,9 @@ export function StudentFields({ state, touched, askPhone }: {
         <option value="">{colleges.isPending ? 'جارٍ التحميل…' : 'اختر الكلية'}</option>
         {colleges.data?.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
       </Select>
-      <Select label="الفرقة" required value={info.level} onChange={set('level')} error={show('level')}>
-        <option value="">اختر الفرقة</option>
-        {levelOptions(colleges.data?.find((c) => String(c.id) === info.collegeId)?.levelsCount ?? 7).map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
+      <Select label="المستوى" required value={info.level} onChange={set('level')} error={show('level')}>
+        <option value="">اختر المستوى</option>
+        {levelOptions(colleges.data?.find((c) => String(c.id) === info.collegeId)?.levelsCount ?? 7, colleges.data?.find((c) => String(c.id) === info.collegeId)?.studySystem).map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
       </Select>
       <Input label="القسم / الشعبة" value={info.department} onChange={set('department')} hint="اختياري" />
       {askPhone && (

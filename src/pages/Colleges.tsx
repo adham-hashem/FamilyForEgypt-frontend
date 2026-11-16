@@ -169,7 +169,7 @@ function CollegeCourses({ collegeId, system }: { collegeId: number; system?: Stu
   });
   if (isPending) return <div className="grid gap-4 sm:grid-cols-2">{Array.from({ length: 4 }, (_, i) => <div key={i} className="skeleton h-28" />)}</div>;
   if (isError) return <ErrorState onRetry={() => void refetch()} />;
-  const hub = <LinkButton to={`/education?college=${collegeId}`} variant="outline" size="sm">تصفح حسب العام والفرقة والترم</LinkButton>;
+  const hub = <LinkButton to={`/education?college=${collegeId}`} variant="outline" size="sm">تصفح حسب العام والمستوى والترم</LinkButton>;
   if (data.length === 0) return <EmptyState title={`لم تُضف مقررات ${academicYearLabel(currentAcademicYear())} بعد`} text="يضيف رائد الأسرة بالكلية المقررات ومحتواها هنا." action={hub} />;
 
   const levels = [...new Set(data.map((c) => c.level))].sort((a, b) => (a || 99) - (b || 99));

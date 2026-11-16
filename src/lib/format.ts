@@ -120,12 +120,18 @@ export const SLOT_LABELS: Record<LeaderSlot, string> = {
   Other: 'قيادات أخرى',
 };
 
-export const LEVELS = ['الأولى', 'الثانية', 'الثالثة', 'الرابعة', 'الخامسة', 'السادسة', 'السابعة'];
-/** What a level is called in the college's study system: «الفرقة» for yearly, «المستوى» for credit hours or points. */
-export const levelWord = (system?: StudySystem | null) => system?.levelWord ?? 'الفرقة';
+const ORDINALS_F = ['الأولى', 'الثانية', 'الثالثة', 'الرابعة', 'الخامسة', 'السادسة', 'السابعة'];
+const ORDINALS_M = ['الأول', 'الثاني', 'الثالث', 'الرابع', 'الخامس', 'السادس', 'السابع'];
+/** The ordinals for the default word «المستوى» (masculine). */
+export const LEVELS = ORDINALS_M;
+/** What a level is called in the college's study system. «المستوى» unless the system says otherwise (e.g. «الفرقة»). */
+export const levelWord = (system?: StudySystem | null) => system?.levelWord ?? 'المستوى';
+/** «الأولى» after a feminine word such as «الفرقة», «الأول» after a masculine one such as «المستوى». */
+export const levelName = (level: number, system?: StudySystem | null) =>
+  (levelWord(system).endsWith('ة') ? ORDINALS_F : ORDINALS_M)[level - 1] ?? String(level);
 export const levelLabel = (level: number, system?: StudySystem | null) => {
   const word = levelWord(system);
-  if (level > 0) return `${word} ${LEVELS[level - 1] ?? level}`;
+  if (level > 0) return `${word} ${levelName(level, system)}`;
   return word === 'الفرقة' ? 'كل الفرق' : word === 'المستوى' ? 'كل المستويات' : 'الكل';
 };
 export const TERMS = ['', 'الفصل الأول', 'الفصل الثاني', 'الفصل الصيفي', 'سنوي (طوال العام)'];
@@ -193,9 +199,9 @@ export const currentTerm = (now = new Date()) => {
 /** Shown left to right whatever the page direction, so it always reads 2026/2027. */
 export const academicYearLabel = (year: number) => `⁦${year}/${year + 1}⁩`;
 
-/** Levels a college actually has, as "الفرقة الأولى"…; falls back to four. */
+/** Levels a college actually has, as "المستوى الأول"…; falls back to four. */
 export const levelOptions = (levelsCount: number | null | undefined, system?: StudySystem | null) =>
-  LEVELS.slice(0, Math.min(Math.max(levelsCount ?? 4, 1), LEVELS.length)).map((name, i) => ({ value: i + 1, label: `${levelWord(system)} ${name}` }));
+  Array.from({ length: Math.min(Math.max(levelsCount ?? 4, 1), ORDINALS_M.length) }, (_, i) => ({ value: i + 1, label: levelLabel(i + 1, system) }));
 
 /** What a college usually has: levels of study by kind of college, so the leader starts from a sensible number. */
 export function suggestedLevels(collegeName: string): number {

@@ -208,8 +208,8 @@ function EditApplication({ data, onClose }: { data: ApplicationDetail; onClose: 
           {colleges.data?.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
           {!colleges.data && <option value={form.collegeId}>{data.collegeName}</option>}
         </Select>
-        <Select label="الفرقة" required value={form.level} onChange={set('level')}>
-          {LEVELS.map((name, i) => <option key={name} value={i + 1}>الفرقة {name}</option>)}
+        <Select label="المستوى" required value={form.level} onChange={set('level')}>
+          {LEVELS.map((name, i) => <option key={name} value={i + 1}>المستوى {name}</option>)}
         </Select>
         <Input label="القسم / الشعبة" value={form.department} onChange={set('department')} />
         <Input label="الموبايل" required dir="ltr" inputMode="numeric" value={form.phone} onChange={setDigits('phone', 11)} />

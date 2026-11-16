@@ -68,7 +68,7 @@ function CourseSuggestions({ collegeId, year, level, term, onPick, onCopied }: {
   if (!data?.fromYear || data.courses.length === 0) return null;
   return (
     <div className="rounded-2xl border border-sky-200 bg-sky-50 p-4 sm:col-span-2">
-      <p className="font-extrabold text-sky-900">💡 مقررات نفس الفرقة والترم في {academicYearLabel(data.fromYear)}</p>
+      <p className="font-extrabold text-sky-900">💡 مقررات نفس المستوى والترم في {academicYearLabel(data.fromYear)}</p>
       <p className="text-sm text-sky-800">اضغط على اسم مقرر لتعبئة النموذج به، أو حدّد المقررات وأضفها كلها مرة واحدة.</p>
       <div className="mt-3 grid gap-1.5 sm:grid-cols-2">
         {data.courses.map((c) => (
@@ -144,7 +144,7 @@ export function AdminCourses() {
   const levels = [...new Set((list.data ?? []).map((c) => c.level))].sort((a, b) => (a || 99) - (b || 99));
   return (
     <>
-      <AdminTitle title="المقررات" subtitle="مقررات كل عام جامعي وفرقة وترم. عند إضافة مقررات عام جديد تظهر لك مقررات العام السابق لنفس الفرقة والترم لتضيفها بضغطة."
+      <AdminTitle title="المقررات" subtitle="مقررات كل عام جامعي ومستوى وترم. عند إضافة مقررات عام جديد تظهر لك مقررات العام السابق لنفس المستوى والترم لتضيفها بضغطة."
         action={<div className="flex flex-wrap gap-2">
           {effectiveCollege && hasRole('CollegeAdmin') && <Button variant="outline" onClick={() => setManagingDepartments(true)}>الأقسام والشعب</Button>}
           <Button onClick={() => open('new')}><Plus className="size-4" /> مقرر جديد</Button>
@@ -167,7 +167,7 @@ export function AdminCourses() {
         <div className="mb-4"><CourseSuggestions collegeId={effectiveCollege} year={year} level={level} term={term} onPick={(c) => { open('new'); fillFrom(c); }} onCopied={refresh} /></div>
       )}
       {list.isPending ? <PageLoader /> : list.isError ? <ErrorState onRetry={() => void list.refetch()} /> : list.data.length === 0 ? (
-        <EmptyState title={`لا توجد مقررات في ${academicYearLabel(year)} لهذا الاختيار`} text={level && term ? 'أضف مقرراً جديداً، أو انسخ مقررات العام السابق من الاقتراحات.' : 'اختر الفرقة والترم لتظهر لك مقررات العام السابق كاقتراحات.'}
+        <EmptyState title={`لا توجد مقررات في ${academicYearLabel(year)} لهذا الاختيار`} text={level && term ? 'أضف مقرراً جديداً، أو انسخ مقررات العام السابق من الاقتراحات.' : 'اختر المستوى والترم لتظهر لك مقررات العام السابق كاقتراحات.'}
           action={<Button onClick={() => open('new')}><Plus className="size-4" /> مقرر جديد</Button>} />
       ) : (
         <div className="grid gap-6">

@@ -128,7 +128,7 @@ function JoinForm({ existing, onSent }: { existing: ApplicationStatusView | null
     studentCode: /^[A-Za-z0-9\-/]{3,30}$/.test(form.studentCode.trim()) ? '' : 'اكتب الرقم الجامعي (أرقام أو حروف إنجليزية).',
     nationalId: /^[23]\d{13}$/.test(form.nationalId) ? '' : 'الرقم القومي 14 رقماً كما في البطاقة.',
     collegeId: form.collegeId ? '' : 'اختر الكلية.',
-    level: form.level ? '' : 'اختر الفرقة.',
+    level: form.level ? '' : 'اختر المستوى.',
     phone: /^01[0125]\d{8}$/.test(form.phone) ? '' : 'رقم الموبايل غير صحيح. مثال: 01012345678',
     whatsApp: !form.whatsApp || /^01[0125]\d{8}$/.test(form.whatsApp) ? '' : 'رقم الواتساب غير صحيح.',
     email: /^\S+@\S+\.\S+$/.test(form.email.trim()) ? '' : 'البريد الإلكتروني غير صحيح.',
@@ -199,9 +199,9 @@ function JoinForm({ existing, onSent }: { existing: ApplicationStatusView | null
           <option value="">{colleges.isPending ? 'جارٍ تحميل الكليات…' : 'اختر الكلية'}</option>
           {colleges.data?.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
         </Select>
-        <Select label="الفرقة الدراسية" required value={form.level} onChange={set('level')} error={show('level')}>
-          <option value="">اختر الفرقة</option>
-          {levelOptions(colleges.data?.find((c) => String(c.id) === form.collegeId)?.levelsCount ?? 7).map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
+        <Select label="المستوى الدراسي" required value={form.level} onChange={set('level')} error={show('level')}>
+          <option value="">اختر المستوى</option>
+          {levelOptions(colleges.data?.find((c) => String(c.id) === form.collegeId)?.levelsCount ?? 7, colleges.data?.find((c) => String(c.id) === form.collegeId)?.studySystem).map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
         </Select>
         <Input label="الرقم الجامعي (ID)" required dir="ltr" value={form.studentCode} onChange={(e) => setForm((f) => ({ ...f, studentCode: normalizeDigits(e.target.value) }))} error={show('studentCode')} />
         <Input label="القسم / البرنامج" value={form.department} onChange={set('department')} hint="اختياري" />

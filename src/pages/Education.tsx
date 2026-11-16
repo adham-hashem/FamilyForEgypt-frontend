@@ -222,7 +222,7 @@ function AllContent({ filter }: { filter: Filter }) {
       </div>
       {isPending ? <div className="grid gap-4">{Array.from({ length: 3 }, (_, i) => <div key={i} className="skeleton h-32" />)}</div>
         : isError ? <ErrorState onRetry={() => void refetch()} />
-        : data.items.length === 0 ? <EmptyState title="لا يوجد محتوى مطابق" text={term ? 'جرّب كلمة بحث أخرى.' : 'يظهر هنا ما يرفعه رائد الأسرة لهذا العام والفرقة والترم.'} />
+        : data.items.length === 0 ? <EmptyState title="لا يوجد محتوى مطابق" text={term ? 'جرّب كلمة بحث أخرى.' : 'يظهر هنا ما يرفعه رائد الأسرة لهذا العام والمستوى والترم.'} />
         : (
           <div className={cx('grid gap-4 transition-opacity', isPlaceholderData && 'opacity-60')}>
             {data.items.map((r) => <div key={r.id} id={`resource-${r.id}`} className="scroll-mt-40"><ResourceCard resource={r} showCategory={!category} /></div>)}
@@ -286,7 +286,7 @@ export default function Education() {
 
   return (
     <>
-      <PageHeader title="العملية التعليمية" subtitle="جداول المحاضرات والامتحانات، المقررات، المحاضرات والسكاشن والملخصات والتكليفات: اختر كليتك وفرقتك والترم." />
+      <PageHeader title="العملية التعليمية" subtitle="جداول المحاضرات والامتحانات، المقررات، المحاضرات والسكاشن والملخصات والتكليفات: اختر كليتك ومستواك والترم." />
       <div className="container-page py-8">
         {colleges.isPending ? <div className="skeleton h-40" /> : colleges.isError ? <ErrorState onRetry={() => void colleges.refetch()} />
           : !college ? <CollegePicker colleges={colleges.data} onPick={(id) => update({ college: id, level: 1 })} />

@@ -566,7 +566,7 @@ function ResourceForm({ resource }: { resource: Resource | null }) {
           </Select>
           {resource ? <Input label="الكلية" value={resource.collegeName ?? ''} disabled /> : <CollegeField value={form.collegeId} onChange={(collegeId) => setForm((f) => ({ ...f, collegeId }))} allowCentral={false} error={show('collegeId')} />}
           <div className="sm:col-span-2">
-            <Input label="العنوان" required maxLength={200} value={form.title} onChange={(e) => setForm((f) => ({ ...f, title: e.target.value }))} error={show('title')} placeholder="مثال: جدول محاضرات الفرقة الثانية — الفصل الأول" />
+            <Input label="العنوان" required maxLength={200} value={form.title} onChange={(e) => setForm((f) => ({ ...f, title: e.target.value }))} error={show('title')} placeholder="مثال: جدول محاضرات المستوى الثانية — الفصل الأول" />
           </div>
           <Select label={levelWord(system)} value={form.level} onChange={(e) => setForm((f) => ({ ...f, level: e.target.value }))}>
             <option value="0">{levelLabel(0, system)}</option>

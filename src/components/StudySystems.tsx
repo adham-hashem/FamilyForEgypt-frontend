@@ -36,7 +36,7 @@ export function StudySystemsManager({ open, onClose }: { open: boolean; onClose:
   return (
     <Modal open={open} title="أنظمة الدراسة" onClose={onClose} wide>
       <p className="mb-4 text-ink-600">
-        النظام يحدد اسم المرحلة في الموقع كله («الفرقة الأولى» أو «المستوى الأول»…). أضف نظاماً جديداً لو ظهر نظام آخر، ثم اختره في بيانات الكلية.
+        النظام يحدد اسم المرحلة في الموقع كله، والأصل «المستوى» («المستوى الأول، الثاني…»). لو ظهر نظام آخر، أو كلية تفضّل «الفرقة» أو «الفصل» أو غيرها، أضفه هنا ثم اختره في بيانات الكلية.
       </p>
 
       {isPending ? null : (
@@ -64,7 +64,7 @@ export function StudySystemsManager({ open, onClose }: { open: boolean; onClose:
         <p className="font-extrabold sm:col-span-2">إضافة نظام جديد</p>
         {add.isError && <div className="sm:col-span-2"><Alert>{(add.error as ApiError).message}</Alert></div>}
         <Input label="اسم النظام" required maxLength={80} value={form.name} onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))} placeholder="مثال: نظام النقاط المعتمدة" />
-        <Input label="اسم المرحلة" required maxLength={30} value={form.levelWord} onChange={(e) => setForm((f) => ({ ...f, levelWord: e.target.value }))} hint="مثل: الفرقة، المستوى، الفصل" />
+        <Input label="اسم المرحلة" required maxLength={30} value={form.levelWord} onChange={(e) => setForm((f) => ({ ...f, levelWord: e.target.value }))} hint="مثل: المستوى، الفرقة، الفصل" />
         <div className="sm:col-span-2"><Checkbox checked={form.usesCredits} onChange={(e) => setForm((f) => ({ ...f, usesCredits: e.target.checked }))} label="المقررات فيه لها ساعات أو نقاط معتمدة" /></div>
         <div className="sm:col-span-2"><Button type="submit" loading={add.isPending} disabled={form.name.trim().length < 2 || form.levelWord.trim().length < 2}>إضافة</Button></div>
       </form>

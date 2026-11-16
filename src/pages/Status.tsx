@@ -45,7 +45,7 @@ function Result({ data }: { data: ApplicationStatusView }) {
         <dl className="mt-4">
           <Row label="الكلية" value={data.collegeName} />
           <Row label="القسم / الشعبة" value={data.department} />
-          <Row label="الفرقة" value={levelLabel(data.level)} />
+          <Row label="المستوى" value={levelLabel(data.level)} />
           <Row label="الرقم الجامعي" value={data.studentCode} ltr />
           <Row label="رقم العضوية" value={data.membershipNumber} ltr />
           <Row label="تاريخ التقديم" value={formatDate(data.createdAt)} />

@@ -241,6 +241,7 @@ function EditApplication({ data, onClose }: { data: ApplicationDetail; onClose: 
 
 export function ApplicationDetailPage() {
   const { id } = useParams();
+  const { hasRole } = useAuth();
   const queryClient = useQueryClient();
   const toast = useToast();
   const [decision, setDecision] = useState<ApplicationStatus | null>(null);
@@ -274,7 +275,7 @@ export function ApplicationDetailPage() {
   return (
     <>
       <Link to="/admin/applications" className="mb-2 flex items-center gap-1 text-sm font-bold text-ink-500 hover:text-brand-700"><ArrowRight className="size-4" /> رجوع للطلبات</Link>
-      <AdminTitle title={data.fullName} subtitle={`${data.collegeName} — ${levelLabel(data.level)}`} action={<Badge tone={STATUS_TONE[data.status]}>{STATUS_LABELS[data.status]}</Badge>} />
+      <AdminTitle title={data.fullName} subtitle={`${data.collegeName} — ${levelLabel(data.level)}`} action={<div className="flex flex-wrap items-center gap-2"><Badge tone={STATUS_TONE[data.status]}>{STATUS_LABELS[data.status]}</Badge>{data.status === 'Approved' && hasRole('CollegeAdmin') && <LinkButton to={`/admin/users?appoint=${data.id}`} variant="outline" size="sm"><ShieldCheck className="size-4" /> تعيين مسؤولاً</LinkButton>}</div>} />
 
       <div className="grid gap-5 xl:grid-cols-[1.2fr_1fr]">
         <div className="grid gap-5">
@@ -406,6 +407,47 @@ function RoleFields({ role, setRole, collegeId, setCollegeId, roles }: {
   );
 }
 
+/** Pick an approved member of the family to appoint: fills in the name, email and college from their application. */
+function MemberPicker({ onPick }: { onPick: (member: { fullName: string; email: string; collegeId: number }) => void }) {
+  const [term, setTerm] = useState('');
+  const q = useDebounced(term.trim());
+  const [busy, setBusy] = useState(false);
+  const list = useQuery({
+    queryKey: ['admin', 'member-picker', q],
+    queryFn: () => api<Paged<ApplicationListItem>>(`/api/admin/applications${toQuery({ status: 'Approved', q, pageSize: 6 })}`),
+    enabled: q.length >= 2,
+  });
+  const pick = async (item: ApplicationListItem) => {
+    setBusy(true);
+    try {
+      const detail = await api<ApplicationDetail>(`/api/admin/applications/${item.id}`);
+      onPick({ fullName: detail.fullName, email: detail.email, collegeId: detail.collegeId });
+      setTerm('');
+    } finally {
+      setBusy(false);
+    }
+  };
+  return (
+    <div className="rounded-2xl bg-ink-50 p-3">
+      <Input label="تعيين عضو من الأسرة" value={term} onChange={(e) => setTerm(e.target.value)} placeholder="ابحث باسم العضو أو رقمه الجامعي" hint="يملأ الاسم والبريد والكلية من طلب عضويته المقبول." />
+      {q.length >= 2 && (
+        <ul className="mt-2 grid gap-1">
+          {list.isPending ? <li className="text-sm text-ink-500">جارٍ البحث…</li>
+            : list.data && list.data.items.length === 0 ? <li className="text-sm text-ink-500">لا يوجد عضو مقبول بهذا الاسم.</li>
+            : list.data?.items.map((item) => (
+              <li key={item.id}>
+                <button type="button" disabled={busy} onClick={() => void pick(item)} className="w-full rounded-xl border border-ink-200 bg-white px-3 py-2 text-start hover:border-brand-400">
+                  <span className="block font-extrabold">{item.fullName}</span>
+                  <span className="block text-xs font-semibold text-ink-500">{item.collegeName} · {item.studentCode}</span>
+                </button>
+              </li>
+            ))}
+        </ul>
+      )}
+    </div>
+  );
+}
+
 export function AdminUsers() {
   const { hasRole } = useAuth();
   const queryClient = useQueryClient();
@@ -422,6 +464,15 @@ export function AdminUsers() {
   const [password, setPassword] = useState<string | null>(null);
   const [emailSent, setEmailSent] = useState(false);
   const [form, setForm] = useState({ fullName: '', email: '', role: '' as UserRole | '', collegeId: '' });
+  const appoint = search.get('appoint');
+  useEffect(() => {
+    if (!appoint) return;
+    api<ApplicationDetail>(`/api/admin/applications/${appoint}`)
+      .then((a) => { setForm({ fullName: a.fullName, email: a.email, role: '', collegeId: String(a.collegeId) }); setCreating(true); })
+      .catch(() => toast('تعذر تحميل بيانات العضو.', 'error'))
+      .finally(() => setSearch((c) => { const n = new URLSearchParams(c); n.delete('appoint'); return n; }, { replace: true }));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [appoint]);
 
   const roles = useQuery({ queryKey: ['admin', 'assignable-roles'], queryFn: () => api<UserRole[]>('/api/admin/users/assignable-roles'), staleTime: 300_000 });
   const { data, isPending, isError, refetch } = useQuery({
@@ -525,8 +576,9 @@ export function AdminUsers() {
       <Modal open={creating} title="إضافة مسؤول" onClose={() => setCreating(false)}>
         <form className="grid gap-4" onSubmit={(e) => { e.preventDefault(); create.mutate(); }}>
           {create.error && <Alert>{(create.error as ApiError).message}</Alert>}
+          <MemberPicker onPick={(m) => setForm((f) => ({ ...f, fullName: m.fullName, email: m.email, collegeId: isUniversity ? String(m.collegeId) : f.collegeId }))} />
           <Input label="الاسم بالكامل" required value={form.fullName} onChange={(e) => setForm((f) => ({ ...f, fullName: e.target.value }))} />
-          <Input label="البريد الإلكتروني" type="email" dir="ltr" required value={form.email} onChange={(e) => setForm((f) => ({ ...f, email: e.target.value }))} hint="إن كان لصاحبه حساب طالب سيُرقّى، وإلا يُنشأ حساب بكلمة مرور مؤقتة." />
+          <Input label="البريد الإلكتروني" type="email" dir="ltr" required value={form.email} onChange={(e) => setForm((f) => ({ ...f, email: e.target.value }))} hint="يُنشأ له حساب إداري ويصله بريد ليختار كلمة المرور. اكتبه يدوياً لمن ليس عضواً بالأسرة." />
           <RoleFields role={form.role} setRole={(role) => setForm((f) => ({ ...f, role }))} collegeId={form.collegeId} setCollegeId={(collegeId) => setForm((f) => ({ ...f, collegeId }))} roles={roles.data ?? []} />
           <div className="flex justify-end gap-2">
             <Button variant="ghost" onClick={() => setCreating(false)}>تراجع</Button>

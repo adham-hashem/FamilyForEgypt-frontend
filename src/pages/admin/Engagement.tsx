@@ -1,5 +1,5 @@
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { ArrowRight, Download, ImagePlus, MousePointerClick, Pencil, Plus, Trash2, Trophy, X } from 'lucide-react';
+import { ArrowRight, Download, ImagePlus, Lightbulb, MousePointerClick, Pencil, Plus, Trash2, Trophy, X } from 'lucide-react';
 import { useEffect, useRef, useState, type FormEvent } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import {
@@ -12,6 +12,8 @@ import {
   COURSE_KIND_LABELS, COURSE_LANGUAGES, FEEDBACK_KIND_LABELS, FEEDBACK_STATUS_LABELS, FEEDBACK_TOPIC_LABELS, TERMS, academicYearLabel, currentAcademicYear, currentTerm,
   formatDate, formatDateTime, formatNumber, fromLocalInput, levelLabel, levelOptions, levelWord, toLocalInput,
 } from '../../lib/format';
+import { COMPETITION_IDEAS, type CompetitionIdea } from '../../lib/competitionIdeas';
+import { MORE_COMPETITION_IDEAS } from '../../lib/competitionIdeasMore';
 import { MAX_PICKED_IMAGE } from '../../lib/images';
 import type {
   AdAdmin, AdPlacement, AdRequest, AdRequestStatus, Competition, CompetitionCategory, CompetitionEntry, CompetitionFormat,
@@ -277,6 +279,50 @@ export function AdminCompetitions() {
 
 type QuestionState = { text: string; options: string[]; correct: number };
 
+const ALL_IDEAS = [...COMPETITION_IDEAS, ...MORE_COMPETITION_IDEAS];
+
+/** Ready-made competition ideas: one tap fills the form below, which the organiser then adjusts. */
+function IdeasPanel({ onPick }: { onPick: (idea: CompetitionIdea) => void }) {
+  const [mode, setMode] = useState<CompetitionMode | ''>('');
+  const [category, setCategory] = useState<CompetitionCategory | ''>('');
+  const ideas = ALL_IDEAS.filter((i) => (!mode || i.mode === mode) && (!category || i.category === category));
+  return (
+    <Card className="mb-5 p-5 sm:p-6">
+      <details open>
+        <summary className="flex cursor-pointer items-center gap-2 text-lg font-extrabold"><Lightbulb className="size-5 text-gold-500" aria-hidden /> أفكار جاهزة للمسابقات</summary>
+        <p className="mb-3 mt-2 text-sm text-ink-600">اختر فكرة وسيتم ملء النموذج بها، وبعدها عدّل العنوان والتفاصيل والأسئلة كما تريد.</p>
+        <div className="mb-3 flex flex-wrap gap-2">
+          {([['', 'الكل'], ['Online', COMPETITION_MODE_LABELS.Online], ['OnSite', COMPETITION_MODE_LABELS.OnSite]] as const).map(([value, label]) => (
+            <button key={value} type="button" onClick={() => setMode(value)} aria-pressed={mode === value}
+              className={cx('rounded-full border px-3 py-1.5 text-sm font-bold', mode === value ? 'border-brand-600 bg-brand-600 text-white' : 'border-ink-200 bg-white hover:border-brand-400')}>{label}</button>
+          ))}
+          <select value={category} onChange={(e) => setCategory(e.target.value as CompetitionCategory | '')} aria-label="تصنيف الفكرة"
+            className="rounded-full border border-ink-200 bg-white px-3 py-1.5 text-sm font-bold">
+            <option value="">كل التصنيفات</option>
+            {(Object.keys(COMPETITION_CATEGORY_LABELS) as CompetitionCategory[]).map((c) => <option key={c} value={c}>{COMPETITION_CATEGORY_LABELS[c]}</option>)}
+          </select>
+          <span className="self-center text-sm text-ink-500">{formatNumber(ideas.length)} فكرة</span>
+        </div>
+        {ideas.length === 0 && <p className="py-4 text-center text-ink-500">لا توجد أفكار بهذا الاختيار.</p>}
+        <ul className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
+          {ideas.map((idea) => (
+            <li key={idea.title}>
+              <button type="button" onClick={() => onPick(idea)} className="flex h-full w-full flex-col items-start gap-1 rounded-xl border border-ink-200 bg-white p-3 text-start hover:border-brand-400 hover:bg-brand-50">
+                <span className="font-extrabold">{idea.title}</span>
+                <span className="text-sm text-ink-600">{idea.blurb}</span>
+                <span className="mt-auto flex flex-wrap gap-1 pt-1">
+                  <Badge tone="brand">{COMPETITION_CATEGORY_LABELS[idea.category]}</Badge>
+                  <Badge tone="neutral">{idea.mode === 'OnSite' ? 'تسجيل حضوري' : COMPETITION_FORMAT_LABELS[idea.format]}</Badge>
+                </span>
+              </button>
+            </li>
+          ))}
+        </ul>
+      </details>
+    </Card>
+  );
+}
+
 export function CompetitionEditor() {
   const { id } = useParams();
   const existing = useQuery({ queryKey: ['competition', id], queryFn: () => api<Competition>(`/api/competitions/${id}`), enabled: !!id && id !== 'new' });
@@ -312,6 +358,15 @@ function CompetitionForm({ competition }: { competition: Competition | null }) {
     competition?.questions.length ? competition.questions.map((q) => ({ text: q.text, options: q.options, correct: q.correct ?? 0 })) : [{ text: '', options: ['', ''], correct: 0 }],
   );
   const set = <K extends keyof typeof form>(key: K, value: (typeof form)[K]) => setForm((f) => ({ ...f, [key]: value }));
+  const applyIdea = (idea: CompetitionIdea) => {
+    setForm((f) => ({
+      ...f, title: idea.title, description: idea.description, category: idea.category, mode: idea.mode, format: idea.format,
+      prize: idea.prize ?? '', rules: idea.rules ?? '', location: idea.location ?? '', question: idea.question ?? '',
+      acceptedAnswers: (idea.acceptedAnswers ?? []).join('\n'),
+    }));
+    setQuestions(idea.questions?.length ? idea.questions.map((q) => ({ ...q })) : [{ text: '', options: ['', ''], correct: 0 }]);
+    toast('تم ملء النموذج بالفكرة. عدّل ما تريد ثم احفظ.');
+  };
   const setMode = (mode: CompetitionMode) => setForm((f) => ({ ...f, mode, format: mode === 'OnSite' ? 'Registration' : f.format === 'Registration' ? 'Riddle' : f.format }));
 
   const save = useMutation({
@@ -361,6 +416,7 @@ function CompetitionForm({ competition }: { competition: Competition | null }) {
     <>
       <Link to="/admin/competitions" className="mb-2 flex items-center gap-1 text-sm font-bold text-ink-500 hover:text-brand-700"><ArrowRight className="size-4" /> كل المسابقات</Link>
       <AdminTitle title={competition ? 'تعديل المسابقة' : 'مسابقة جديدة'} action={competition && <LinkButton to={`/competitions/${competition.id}`} variant="outline" size="sm">عرض الصفحة</LinkButton>} />
+      {!competition && <IdeasPanel onPick={applyIdea} />}
       <form className="grid gap-5" noValidate onSubmit={(e) => { e.preventDefault(); save.mutate(); }}>
         {save.error && <Alert>{(save.error as ApiError).message}</Alert>}
         <Card className="grid gap-4 p-5 sm:grid-cols-2 sm:p-6">

@@ -10,7 +10,7 @@ import { useAuth } from '../../lib/auth';
 import {
   AD_PLACEMENT_LABELS, AD_REQUEST_STATUS_LABELS, COMPETITION_CATEGORY_LABELS, COMPETITION_FORMAT_LABELS, COMPETITION_MODE_LABELS,
   COURSE_KIND_LABELS, COURSE_LANGUAGES, FEEDBACK_KIND_LABELS, FEEDBACK_STATUS_LABELS, FEEDBACK_TOPIC_LABELS, TERMS, academicYearLabel, currentAcademicYear, currentTerm,
-  formatDate, formatDateTime, formatNumber, fromLocalInput, levelLabel, levelOptions, levelWord, toLocalInput,
+  formatDate, formatDateTime, formatNumber, fromLocalInput, levelLabel, levelOptions, levelWord, periodLabel, toLocalInput,
 } from '../../lib/format';
 import { COMPETITION_IDEAS, type CompetitionIdea } from '../../lib/competitionIdeas';
 import { MORE_COMPETITION_IDEAS } from '../../lib/competitionIdeasMore';
@@ -19,6 +19,7 @@ import type {
   AdAdmin, AdPlacement, AdRequest, AdRequestStatus, Competition, CompetitionCategory, CompetitionEntry, CompetitionFormat,
   CompetitionListItem, CompetitionMode, Course, FeedbackItem, FeedbackKind, FeedbackStatus, FeedbackTopic, Paged,
 } from '../../lib/types';
+import { ReportActions, fetchAllPages } from '../../components/ReportActions';
 import { DepartmentPicker, DepartmentsManager } from '../../components/Departments';
 import { AdminTitle } from './AdminLayout';
 import { useManagedColleges } from './Content';
@@ -148,6 +149,17 @@ export function AdminCourses() {
     <>
       <AdminTitle title="المقررات" subtitle="مقررات كل عام جامعي ومستوى وترم. عند إضافة مقررات عام جديد تظهر لك مقررات العام السابق لنفس المستوى والترم لتضيفها بضغطة."
         action={<div className="flex flex-wrap gap-2">
+          <ReportActions fileName={`المقررات-${year}-${year + 1}`} disabled={!list.data} build={async () => ({
+            title: 'المقررات',
+            subtitle: [periodLabel(year, term || null), level ? levelLabel(level, system) : '', activeCollege?.name].filter(Boolean).join(' — '),
+            sections: [{
+              columns: ['المقرر', 'الكود', 'الكلية', 'المستوى', 'الفصل', 'القسم', 'المحاضر', 'الساعات', 'النوع', 'اللغة', 'الملفات', 'الحالة'],
+              rows: (list.data ?? []).map((c) => [
+                c.name, c.code, c.collegeName, levelLabel(c.level, colleges.data?.find((x) => x.id === c.collegeId)?.studySystem), TERMS[c.term], c.department, c.instructor,
+                c.creditHours, COURSE_KIND_LABELS[c.kind], c.language, c.resourcesCount, c.isPublished ? 'منشور' : 'مخفي',
+              ]),
+            }],
+          })} />
           {effectiveCollege && hasRole('CollegeAdmin') && <Button variant="outline" onClick={() => setManagingDepartments(true)}>الأقسام والشعب</Button>}
           <Button onClick={() => open('new')}><Plus className="size-4" /> مقرر جديد</Button>
         </div>} />
@@ -249,7 +261,20 @@ export function AdminCompetitions() {
   return (
     <>
       <AdminTitle title="المسابقات" subtitle="مسابقات على أرض الواقع يسجّل لها الطلاب، أو مسابقات كاملة على الموقع: فزورة، أسئلة اختيارات، أو إرسال عمل."
-        action={<LinkButton to="/admin/competitions/new"><Plus className="size-4" /> مسابقة جديدة</LinkButton>} />
+        action={<div className="flex flex-wrap gap-2">
+          <ReportActions fileName="المسابقات" disabled={!data} build={async () => ({
+            title: 'المسابقات',
+            sections: [{
+              columns: ['المسابقة', 'النوع', 'تُقام', 'الشكل', 'الجهة', 'الموعد', 'بداية المشاركة', 'آخر موعد', 'المشاركون', 'الجائزة', 'الحالة'],
+              rows: (data ?? []).map((c) => [
+                c.title, COMPETITION_CATEGORY_LABELS[c.category], COMPETITION_MODE_LABELS[c.mode], COMPETITION_FORMAT_LABELS[c.format], c.collegeName ?? 'الأسرة',
+                c.eventAt ? formatDateTime(c.eventAt) : '', c.opensAt ? formatDateTime(c.opensAt) : '', c.closesAt ? formatDateTime(c.closesAt) : '',
+                c.entriesCount, c.prize, c.isPublished ? (c.isOpen ? 'مفتوحة' : 'منشورة') : 'مخفية',
+              ]),
+            }],
+          })} />
+          <LinkButton to="/admin/competitions/new"><Plus className="size-4" /> مسابقة جديدة</LinkButton>
+        </div>} />
       {isPending ? <PageLoader /> : isError ? <ErrorState onRetry={() => void refetch()} /> : data.length === 0 ? (
         <EmptyState title="لا توجد مسابقات بعد" action={<LinkButton to="/admin/competitions/new"><Plus className="size-4" /> مسابقة جديدة</LinkButton>} />
       ) : (
@@ -564,9 +589,22 @@ export function CompetitionEntriesPage() {
     <>
       <Link to="/admin/competitions" className="mb-2 flex items-center gap-1 text-sm font-bold text-ink-500 hover:text-brand-700"><ArrowRight className="size-4" /> كل المسابقات</Link>
       <AdminTitle title={`مشاركات: ${c.title}`} subtitle={`${COMPETITION_FORMAT_LABELS[c.format]} · ${formatNumber(entries.data.length)} مشارك · ${formatNumber(winners)} فائز`}
-        action={c.resultsPublished
-          ? <Button variant="outline" loading={results.isPending} onClick={() => results.mutate(false)}>إخفاء النتائج</Button>
-          : <Button variant="gold" loading={results.isPending} onClick={() => results.mutate(true)} disabled={winners === 0}><Trophy className="size-4" /> إعلان النتائج</Button>} />
+        action={<div className="flex flex-wrap gap-2">
+          <ReportActions fileName={`مشاركات-${c.title}`} build={async () => ({
+            title: `مشاركات: ${c.title}`,
+            subtitle: `${COMPETITION_FORMAT_LABELS[c.format]} — ${formatNumber(entries.data.length)} مشارك — ${formatNumber(winners)} فائز`,
+            sections: [{
+              columns: ['الاسم', 'الرقم القومي', 'الكلية', 'القسم', 'المستوى', 'الهاتف', 'الإجابة', 'صحيحة', 'الدرجة', 'فائز', 'الترتيب', 'وقت المشاركة'],
+              rows: [...entries.data].sort((a, b) => (a.rank ?? 9999) - (b.rank ?? 9999)).map((e) => [
+                e.fullName, e.nationalIdMasked, e.collegeName, e.department, levelLabel(e.level), e.phone, e.answer ?? (e.choices.length ? e.choices.map((n) => n + 1).join('، ') : ''),
+                e.isCorrect === null ? '' : e.isCorrect ? 'نعم' : 'لا', e.score, e.isWinner ? 'نعم' : '', e.rank, formatDateTime(e.createdAt),
+              ]),
+            }],
+          })} />
+          {c.resultsPublished
+            ? <Button variant="outline" loading={results.isPending} onClick={() => results.mutate(false)}>إخفاء النتائج</Button>
+            : <Button variant="gold" loading={results.isPending} onClick={() => results.mutate(true)} disabled={winners === 0}><Trophy className="size-4" /> إعلان النتائج</Button>}
+        </div>} />
       {!c.resultsPublished && <Alert tone="info">حدّد الفائزين وترتيبهم، ثم اضغط «إعلان النتائج» ليظهروا في صفحة المسابقة{c.format === 'Riddle' ? ' مع الإجابة الصحيحة' : ''}.</Alert>}
       {entries.data.length === 0 ? <div className="mt-4"><EmptyState title="لا توجد مشاركات بعد" /></div> : (
         <div className="mt-4 grid gap-2">
@@ -635,7 +673,18 @@ export function AdminFeedback() {
 
   return (
     <>
-      <AdminTitle title="الاقتراحات والشكاوى" subtitle="رسائل الطلاب عن الأنشطة والعملية التعليمية. يرى الطالب ردك حين يكتب رقمه القومي في صفحة «اقتراحات وشكاوى»." />
+      <AdminTitle title="الاقتراحات والشكاوى" subtitle="رسائل الطلاب عن الأنشطة والعملية التعليمية. يرى الطالب ردك حين يكتب رقمه القومي في صفحة «اقتراحات وشكاوى»."
+        action={<ReportActions fileName="الاقتراحات-والشكاوى" build={async () => {
+          const items = await fetchAllPages<FeedbackItem>('/api/admin/feedback', { ...filter, collegeId: filter.collegeId || undefined });
+          return {
+            title: 'الاقتراحات والشكاوى',
+            subtitle: [filter.kind && FEEDBACK_KIND_LABELS[filter.kind], filter.topic && FEEDBACK_TOPIC_LABELS[filter.topic], filter.status && FEEDBACK_STATUS_LABELS[filter.status], colleges.data?.find((c) => String(c.id) === filter.collegeId)?.name].filter(Boolean).join(' — '),
+            sections: [{
+              columns: ['الطالب', 'الكلية', 'المستوى', 'النوع', 'الموضوع', 'العنوان', 'الرسالة', 'الحالة', 'الرد', 'التاريخ'],
+              rows: items.map((f) => [f.fullName, f.collegeName, levelLabel(f.level, colleges.data?.find((c) => c.id === f.collegeId)?.studySystem), FEEDBACK_KIND_LABELS[f.kind], FEEDBACK_TOPIC_LABELS[f.topic], f.subject, f.message, FEEDBACK_STATUS_LABELS[f.status], f.reply, formatDate(f.createdAt)]),
+            }],
+          };
+        }} />} />
       <div className="mb-4 grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
         <Select label="النوع" value={filter.kind} onChange={(e) => change('kind', e.target.value)}>
           <option value="">الكل</option>{(Object.keys(FEEDBACK_KIND_LABELS) as FeedbackKind[]).map((k) => <option key={k} value={k}>{FEEDBACK_KIND_LABELS[k]}</option>)}
@@ -717,7 +766,20 @@ export function AdminAdRequests() {
   return (
     <>
       <AdminTitle title="طلبات الإعلان" subtitle="جهات ومؤسسات تريد الإعلان على الموقع. تواصل معهم، ثم أضف الإعلان من «الإعلانات»."
-        action={<LinkButton to="/admin/ads" variant="outline">الإعلانات</LinkButton>} />
+        action={<div className="flex flex-wrap gap-2">
+          <ReportActions fileName="طلبات-الإعلان" build={async () => {
+            const items = await fetchAllPages<AdRequest>('/api/admin/ad-requests', { status: status || undefined });
+            return {
+              title: 'طلبات الإعلان',
+              subtitle: status ? AD_REQUEST_STATUS_LABELS[status] : undefined,
+              sections: [{
+                columns: ['الجهة', 'المسؤول', 'الهاتف', 'البريد', 'الموقع', 'نوع الإعلان', 'الرسالة', 'الحالة', 'ملاحظة', 'التاريخ'],
+                rows: items.map((r) => [r.organizationName, r.contactName, r.phone, r.email, r.website, r.adKind, r.message, AD_REQUEST_STATUS_LABELS[r.status], r.adminNote, formatDate(r.createdAt)]),
+              }],
+            };
+          }} />
+          <LinkButton to="/admin/ads" variant="outline">الإعلانات</LinkButton>
+        </div>} />
       <div className="mb-4 max-w-xs">
         <Select label="الحالة" value={status} onChange={(e) => { setPage(1); setStatus(e.target.value as AdRequestStatus | ''); }}>
           <option value="">الكل</option>{(Object.keys(AD_REQUEST_STATUS_LABELS) as AdRequestStatus[]).map((k) => <option key={k} value={k}>{AD_REQUEST_STATUS_LABELS[k]}</option>)}
@@ -823,7 +885,16 @@ export function AdminAds() {
   return (
     <>
       <AdminTitle title="الإعلانات" subtitle="تظهر الإعلانات مميَّزة بكلمة «إعلان» في أماكن مخصصة: الصفحة الرئيسية، بين الأنشطة، وأسفل صفحات المحتوى."
-        action={<Button onClick={() => open('new')}><Plus className="size-4" /> إعلان جديد</Button>} />
+        action={<div className="flex flex-wrap gap-2">
+          <ReportActions fileName="الإعلانات" disabled={!list.data} build={async () => ({
+            title: 'الإعلانات',
+            sections: [{
+              columns: ['الإعلان', 'المعلن', 'المكان', 'البداية', 'النهاية', 'الحالة', 'النقرات', 'الرابط'],
+              rows: (list.data ?? []).map((a) => [a.title, a.advertiserName, AD_PLACEMENT_LABELS[a.placement], a.startsAt ? formatDate(a.startsAt) : '', a.endsAt ? formatDate(a.endsAt) : '', a.isLive ? 'ظاهر الآن' : a.isActive ? 'مجدول أو منتهٍ' : 'موقوف', a.clicks, a.linkUrl]),
+            }],
+          })} />
+          <Button onClick={() => open('new')}><Plus className="size-4" /> إعلان جديد</Button>
+        </div>} />
       {list.isPending ? <PageLoader /> : list.isError ? <ErrorState onRetry={() => void list.refetch()} /> : list.data.length === 0 ? (
         <EmptyState title="لا توجد إعلانات" action={<LinkButton to="/admin/ad-requests" variant="outline">طلبات الإعلان</LinkButton>} />
       ) : (

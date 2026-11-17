@@ -74,6 +74,28 @@ export interface PostListItem {
   status: PostStatus;
   publishedAt: string | null;
   createdAt: string;
+  /** Events that repeat share one series id. */
+  seriesId?: string | null;
+  /** Of an event: the academic year by its first calendar year (2026 is 2026/2027), and the term (1, 2, or 3 for summer). */
+  academicYear?: number | null;
+  term?: number | null;
+}
+
+export interface SeriesOccurrence {
+  id: number;
+  startsAt: string | null;
+  endsAt: string | null;
+  status: PostStatus;
+  location: string | null;
+  academicYear: number | null;
+  term: number | null;
+}
+
+export interface AttendanceReport {
+  academicYear: number;
+  term: number | null;
+  events: { id: number; title: string; collegeName: string | null; startsAt: string; location: string | null; registered: number; checkedIn: number; term: number }[];
+  members: { memberId: number; fullName: string; membershipNumber: string | null; studentCode: string; collegeName: string; level: number; attended: number }[];
 }
 
 export interface PostImage {
@@ -93,6 +115,7 @@ export interface PostDetail extends Omit<PostListItem, 'summary' | 'coverUrl' | 
   attendeesCount: number;
   isAttending: boolean;
   checkedIn: boolean;
+  series?: SeriesOccurrence[] | null;
 }
 
 export interface ResourceFile {

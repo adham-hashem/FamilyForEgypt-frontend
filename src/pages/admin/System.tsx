@@ -8,6 +8,7 @@ import { api, mediaUrl, toQuery, type ApiError } from '../../lib/api';
 import { MAX_PICKED_IMAGE } from '../../lib/images';
 import { useAuth } from '../../lib/auth';
 import { SLOT_LABELS, formatDateTime, suggestedLevels } from '../../lib/format';
+import { ReportActions, fetchAllPages } from '../../components/ReportActions';
 import { StudySystemsManager, useStudySystems } from '../../components/StudySystems';
 import { DepartmentsManager } from '../../components/Departments';
 import type { AuditLog, College, Leader, LeaderSlot, Paged } from '../../lib/types';
@@ -61,7 +62,17 @@ export function AdminColleges() {
       <AdminTitle
         title="الكليات"
         subtitle={isUniversity ? 'أنشئ كليات الجامعة ثم عيّن لكل كلية مسؤوليها من صفحة «المسؤولون».' : 'بيانات كليتك كما تظهر للطلاب.'}
-        action={isUniversity ? <div className="flex flex-wrap gap-2"><Button variant="outline" onClick={() => setManagingSystems(true)}>أنظمة الدراسة</Button><Button onClick={() => open('new')}><Plus className="size-4" /> كلية جديدة</Button></div> : undefined}
+        action={<div className="flex flex-wrap gap-2">
+          <ReportActions fileName="الكليات" disabled={!data} build={async () => ({
+            title: 'الكليات',
+            sections: [{
+              columns: ['الكلية', 'العميد', 'نظام الدراسة', 'عدد المستويات', 'الموقع', 'الحالة'],
+              rows: (data ?? []).map((c) => [c.name, c.deanName, c.studySystem?.name, c.levelsCount, c.websiteUrl, c.isActive ? 'مفعّلة' : 'موقوفة']),
+            }],
+          })} />
+          {isUniversity && <Button variant="outline" onClick={() => setManagingSystems(true)}>أنظمة الدراسة</Button>}
+          {isUniversity && <Button onClick={() => open('new')}><Plus className="size-4" /> كلية جديدة</Button>}
+        </div>}
       />
       <DepartmentsManager open={!!managingDepartments} onClose={() => setManagingDepartments(null)} collegeId={managingDepartments?.id ?? null} collegeName={managingDepartments?.name ?? ''} />
       {isUniversity && <StudySystemsManager open={managingSystems} onClose={() => setManagingSystems(false)} />}
@@ -382,7 +393,17 @@ export function AdminAudit() {
 
   return (
     <>
-      <AdminTitle title="سجل العمليات" subtitle="كل إجراء إداري مسجّل هنا: من قام به ومتى." />
+      <AdminTitle title="سجل العمليات" subtitle="كل إجراء إداري مسجّل هنا: من قام به ومتى."
+        action={<ReportActions fileName="سجل-العمليات" build={async () => {
+          const items = await fetchAllPages<AuditLog>('/api/admin/audit');
+          return {
+            title: 'سجل العمليات',
+            sections: [{
+              columns: ['الوقت', 'المستخدم', 'العملية', 'العنصر', 'التفاصيل', 'IP'],
+              rows: items.map((l) => [formatDateTime(l.createdAt), l.userName, ACTIONS[l.action] ?? l.action, [l.entityType, l.entityId].filter(Boolean).join(' #'), l.details, l.ip]),
+            }],
+          };
+        }} />} />
       {isPending ? (
         <PageLoader />
       ) : isError ? (

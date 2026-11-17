@@ -7,6 +7,7 @@ import {
 } from '../../components/ui';
 import { api, fetchBlobUrl, toQuery, type ApiError } from '../../lib/api';
 import { useAuth } from '../../lib/auth';
+import { ReportActions, fetchAllPages } from '../../components/ReportActions';
 import { StudentCardPanel } from '../../components/StudentCard';
 import { COMMITTEES, GOVERNORATES, LEVELS, ROLE_HINTS, ROLE_LABELS, STATUS_LABELS, formatDate, levelLabel, normalizeDigits } from '../../lib/format';
 import type { AdminUser, ApplicationDetail, ApplicationListItem, ApplicationStatus, Paged, UserRole } from '../../lib/types';
@@ -68,7 +69,18 @@ export function AdminApplications() {
 
   return (
     <>
-      <AdminTitle title="طلبات العضوية" subtitle="راجع بيانات الطلاب وصور البطاقات ثم اقبل أو ارفض." />
+      <AdminTitle title="طلبات العضوية" subtitle="راجع بيانات الطلاب وصور البطاقات ثم اقبل أو ارفض."
+        action={<ReportActions fileName={status === 'Approved' ? 'أعضاء-الأسرة' : 'طلبات-العضوية'} build={async () => {
+          const items = await fetchAllPages<ApplicationListItem>('/api/admin/applications', { status, collegeId, q });
+          return {
+            title: status === 'Approved' ? 'أعضاء الأسرة' : 'طلبات العضوية',
+            subtitle: [status && STATUS_LABELS[status as ApplicationStatus], colleges.data?.find((c) => String(c.id) === collegeId)?.name, q && `بحث: ${q}`].filter(Boolean).join(' — '),
+            sections: [{
+              columns: ['الاسم', 'الرقم الجامعي', 'الكلية', 'المستوى', 'الهاتف', 'الحالة', 'تاريخ التقديم'],
+              rows: items.map((a) => [a.fullName, a.studentCode, a.collegeName, levelLabel(a.level, colleges.data?.find((c) => c.id === a.collegeId)?.studySystem), a.phone, STATUS_LABELS[a.status], formatDate(a.createdAt)]),
+            }],
+          };
+        }} />} />
       <div className="mb-4 flex flex-wrap gap-2">
         <SearchBox value={term} onChange={setTerm} placeholder="ابحث بالاسم، الرقم الجامعي، الموبايل أو الرقم القومي كاملاً" />
         <select aria-label="الحالة" className={selectClass} value={status} onChange={(e) => set({ status: e.target.value })}>
@@ -522,7 +534,20 @@ export function AdminUsers() {
       <AdminTitle
         title="المسؤولون والصلاحيات"
         subtitle={isUniversity ? 'عيّن مسؤولي الكليات والمحررين وتحكم في صلاحياتهم.' : 'أضف محرري كليتك وتحكم في حساباتهم.'}
-        action={<Button onClick={() => { create.reset(); setForm({ fullName: '', email: '', role: '', collegeId: '' }); setCreating(true); }}><Plus className="size-4" /> إضافة مسؤول</Button>}
+        action={<div className="flex flex-wrap gap-2">
+          <ReportActions fileName={staffOnly ? 'المسؤولون' : 'حسابات-الطلاب'} build={async () => {
+            const items = await fetchAllPages<AdminUser>('/api/admin/users', { staffOnly, q });
+            return {
+              title: staffOnly ? 'المسؤولون والصلاحيات' : 'حسابات الطلاب',
+              subtitle: q ? `بحث: ${q}` : undefined,
+              sections: [{
+                columns: ['الاسم', 'البريد الإلكتروني', 'الصلاحية', 'الكلية', 'الحالة', 'آخر دخول', 'تاريخ الإنشاء'],
+                rows: items.map((u) => [u.fullName, u.email, ROLE_LABELS[u.role], u.collegeName, u.isActive ? 'مفعّل' : 'موقوف', u.lastLoginAt ? formatDate(u.lastLoginAt) : 'لم يدخل بعد', formatDate(u.createdAt)]),
+              }],
+            };
+          }} />
+          <Button onClick={() => { create.reset(); setForm({ fullName: '', email: '', role: '', collegeId: '' }); setCreating(true); }}><Plus className="size-4" /> إضافة مسؤول</Button>
+        </div>}
       />
       <div className="mb-4 flex flex-wrap gap-2">
         <SearchBox value={term} onChange={setTerm} placeholder="ابحث بالاسم أو البريد الإلكتروني" />

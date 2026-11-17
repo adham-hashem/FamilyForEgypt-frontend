@@ -1,0 +1,115 @@
+/* Printed reports: a titled page with tables, A4. Shares the .print-root hiding rules in index.css. */
+@media print {
+  @page report-portrait {
+    size: A4 portrait;
+    margin: 10mm;
+  }
+  @page report-landscape {
+    size: A4 landscape;
+    margin: 10mm;
+  }
+
+  .print-root.report-print {
+    display: block;
+    grid-template-columns: none;
+    color: #14110f;
+    font-size: 10pt;
+    line-height: 1.5;
+  }
+  .report-portrait {
+    page: report-portrait;
+  }
+  .report-landscape {
+    page: report-landscape;
+  }
+
+  .report-head {
+    display: flex;
+    align-items: center;
+    gap: 4mm;
+    padding-bottom: 3mm;
+    margin-bottom: 4mm;
+    border-bottom: 0.5mm solid #9f1d1d;
+  }
+  .report-head img {
+    width: 16mm;
+    height: 16mm;
+    object-fit: contain;
+  }
+  .report-head > div {
+    flex: 1;
+  }
+  .report-head strong {
+    font-size: 9pt;
+    color: #5a524b;
+  }
+  .report-head h1 {
+    margin: 0;
+    font-size: 15pt;
+    font-weight: 800;
+  }
+  .report-head p {
+    margin: 0;
+    font-size: 9.5pt;
+    color: #3d3733;
+  }
+  .report-date {
+    font-size: 8.5pt;
+    color: #5a524b;
+    white-space: nowrap;
+  }
+
+  .report-section {
+    margin-bottom: 6mm;
+  }
+  .report-section h2 {
+    margin: 0 0 2mm;
+    font-size: 11.5pt;
+    font-weight: 800;
+  }
+  .report-section h2 small {
+    font-weight: 600;
+    color: #5a524b;
+  }
+
+  .report-print table {
+    width: 100%;
+    border-collapse: collapse;
+    table-layout: auto;
+  }
+  .report-print thead {
+    display: table-header-group;
+  }
+  .report-print tr {
+    break-inside: avoid;
+  }
+  .report-print th,
+  .report-print td {
+    border: 0.25mm solid #b9b1aa;
+    padding: 1.2mm 2mm;
+    text-align: start;
+    vertical-align: top;
+    overflow-wrap: anywhere;
+  }
+  .report-print th {
+    background: #9f1d1d;
+    color: #fff;
+    font-weight: 800;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+  .report-print tbody tr:nth-child(even) td {
+    background: #f6f2ee;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+  .report-print .report-n {
+    width: 9mm;
+    text-align: center;
+    color: #5a524b;
+  }
+  .report-print .report-empty {
+    text-align: center;
+    color: #5a524b;
+  }
+}

@@ -34,6 +34,7 @@ const AdminAds = lazy(() => engagement().then((m) => ({ default: m.AdminAds })))
 const About = lazy(() => import('./pages/About'));
 const ForgotPassword = lazy(() => import('./pages/Recovery').then((m) => ({ default: m.ForgotPassword })));
 const ResetPassword = lazy(() => import('./pages/Recovery').then((m) => ({ default: m.ResetPassword })));
+const AdminAttendanceReport = lazy(() => import('./pages/admin/AttendanceReport').then((m) => ({ default: m.AdminAttendanceReport })));
 const AdminAttendees = lazy(() => import('./pages/Attendance').then((m) => ({ default: m.AdminAttendees })));
 const AdminLayout = lazy(() => import('./pages/admin/AdminLayout'));
 const Dashboard = lazy(() => import('./pages/admin/AdminLayout').then((m) => ({ default: m.Dashboard })));
@@ -150,6 +151,7 @@ const router = createBrowserRouter([
                   { path: 'posts/new', element: <PostEditor /> },
                   { path: 'posts/:id', element: <PostEditor /> },
                   { path: 'posts/:id/attendees', element: <AdminAttendees /> },
+                  { path: 'attendance', element: <RequireAuth minimum="CollegeAdmin"><AdminAttendanceReport /></RequireAuth> },
                   { path: 'resources', element: <AdminResources /> },
                   { path: 'resources/new', element: <ResourceEditor /> },
                   { path: 'resources/:id', element: <ResourceEditor /> },

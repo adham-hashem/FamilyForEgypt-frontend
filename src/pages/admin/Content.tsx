@@ -9,10 +9,12 @@ import { api, mediaUrl, toQuery, type ApiError } from '../../lib/api';
 import { MAX_PICKED_IMAGE } from '../../lib/images';
 import { useAuth } from '../../lib/auth';
 import {
-  CATEGORY_LABELS, DUE_LABELS, POST_TYPE_LABELS, TERMS, academicYearLabel, currentAcademicYear, formatDate, formatSize, fromLocalInput, levelLabel, levelOptions, levelWord, toLocalInput,
+  CATEGORY_LABELS, DUE_LABELS, POST_TYPE_LABELS, TERMS, academicYearLabel, currentAcademicYear, currentTerm, formatDate, formatDateTime, periodLabel, formatSize, fromLocalInput, levelLabel, levelOptions, levelWord, toLocalInput,
 } from '../../lib/format';
 import type { College, Course, Paged, PostDetail, PostImage, PostListItem, PostType, Resource, ResourceCategory, ResourceFile } from '../../lib/types';
+import { ReportActions, fetchAllPages } from '../../components/ReportActions';
 import { DepartmentPicker } from '../../components/Departments';
+import { RepeatEvent } from '../../components/RepeatEvent';
 import { AdminTitle } from './AdminLayout';
 
 const MAX_IMAGE = MAX_PICKED_IMAGE;
@@ -61,8 +63,10 @@ export function AdminPosts() {
     status: search.get('status') ?? '', type: search.get('type') ?? '',
     collegeId: search.get('college') === 'central' ? '' : search.get('college') ?? '',
     scope: search.get('college') === 'central' ? 'central' : '',
+    academicYear: search.get('year') ?? '', term: search.get('term') ?? '',
     page: Number(search.get('page') ?? 1), pageSize: 15,
   };
+  const thisYear = currentAcademicYear();
   const { data, isPending, isError, refetch } = useQuery({
     queryKey: ['admin', 'posts', params],
     queryFn: () => api<Paged<PostListItem>>(`/api/admin/posts${toQuery(params)}`),
@@ -80,7 +84,30 @@ export function AdminPosts() {
 
   return (
     <>
-      <AdminTitle title="الأخبار والفعاليات" subtitle="انشر أخبار وفعاليات وإعلانات كليتك." action={<LinkButton to="/admin/posts/new"><Plus className="size-4" /> منشور جديد</LinkButton>} />
+      <AdminTitle title="الأخبار والفعاليات" subtitle="انشر أخبار وفعاليات وإعلانات كليتك." action={
+        <div className="flex flex-wrap gap-2">
+          <ReportActions fileName="الأخبار-والفعاليات" build={async () => {
+            const items = await fetchAllPages<PostListItem>('/api/admin/posts', { status: params.status, type: params.type, collegeId: params.collegeId, scope: params.scope, academicYear: params.academicYear, term: params.term });
+            return {
+              title: 'الأخبار والفعاليات',
+              subtitle: [
+                params.type && POST_TYPE_LABELS[params.type as PostType],
+                params.status === 'Published' ? 'منشورة' : params.status === 'Draft' ? 'مسودات' : '',
+                params.academicYear && periodLabel(Number(params.academicYear), params.term ? Number(params.term) : null),
+                colleges.data?.find((c) => String(c.id) === params.collegeId)?.name,
+              ].filter(Boolean).join(' — '),
+              sections: [{
+                columns: ['العنوان', 'النوع', 'الجهة', 'الحالة', 'موعد الفعالية', 'العام الجامعي', 'الفصل', 'المكان', 'تاريخ الإنشاء'],
+                rows: items.map((p) => [
+                  p.title, POST_TYPE_LABELS[p.type], p.collegeName ?? 'الأسرة (مركزي)', p.status === 'Draft' ? 'مسودة' : 'منشور',
+                  p.eventStartsAt ? formatDateTime(p.eventStartsAt) : '', p.academicYear ? academicYearLabel(p.academicYear) : '', p.term ? TERMS[p.term] : '',
+                  p.location, formatDate(p.createdAt),
+                ]),
+              }],
+            };
+          }} />
+          <LinkButton to="/admin/posts/new"><Plus className="size-4" /> منشور جديد</LinkButton>
+        </div>} />
       <div className="mb-4 flex flex-wrap gap-2">
         <FilterSelect label="النوع" value={params.type} onChange={(v) => set({ type: v })}>
           <option value="">كل الأنواع</option>
@@ -91,6 +118,16 @@ export function AdminPosts() {
           <option value="Published">منشور</option>
           <option value="Draft">مسودة</option>
         </FilterSelect>
+        <FilterSelect label="العام الجامعي" value={params.academicYear} onChange={(v) => set(v ? { year: v } : { year: '', term: '' })}>
+          <option value="">كل الأعوام</option>
+          {Array.from({ length: 5 }, (_, i) => thisYear + 1 - i).map((y) => <option key={y} value={y}>فعاليات {academicYearLabel(y)}</option>)}
+        </FilterSelect>
+        {params.academicYear && (
+          <FilterSelect label="الفصل" value={params.term} onChange={(v) => set({ term: v })}>
+            <option value="">كل العام</option>
+            {[1, 2, 3].map((t) => <option key={t} value={t}>{TERMS[t]}</option>)}
+          </FilterSelect>
+        )}
         {isUniversity && (
           <FilterSelect label="الجهة" value={search.get('college') ?? ''} onChange={(v) => set({ college: v })}>
             <option value="">كل الجهات</option>
@@ -119,9 +156,11 @@ export function AdminPosts() {
                     <Badge tone={post.type === 'Event' ? 'brand' : 'dark'}>{POST_TYPE_LABELS[post.type]}</Badge>
                     {post.status === 'Draft' ? <Badge tone="amber">مسودة</Badge> : <Badge tone="green">منشور</Badge>}
                     {post.isPinned && <Badge tone="gold">مثبّت</Badge>}
+                    {post.type === 'Event' && post.term ? <Badge tone="neutral">{TERMS[post.term]} {academicYearLabel(post.academicYear!)}</Badge> : null}
+                    {post.seriesId && <Badge tone="gold">متكررة</Badge>}
                   </div>
                   <Link to={`/admin/posts/${post.id}`} className="mt-1 block truncate font-extrabold hover:text-brand-700">{post.title}</Link>
-                  <p className="truncate text-xs font-semibold text-ink-500">{post.collegeName ?? 'الأسرة (مركزي)'} · {formatDate(post.createdAt)}</p>
+                  <p className="truncate text-xs font-semibold text-ink-500">{post.collegeName ?? 'الأسرة (مركزي)'} · {post.type === 'Event' && post.eventStartsAt ? formatDateTime(post.eventStartsAt) : formatDate(post.createdAt)}</p>
                 </div>
                 <div className="flex shrink-0 gap-1">
                   {post.type === 'Event' && <Link to={`/admin/posts/${post.id}/attendees`} className="rounded-lg p-2 text-ink-500 hover:bg-ink-100" aria-label="الحضور" title="الحضور"><Users className="size-5" /></Link>}
@@ -348,6 +387,11 @@ function PostForm({ post }: { post: PostDetail | null }) {
             <>
               <Input label="موعد البداية" type="datetime-local" required value={form.eventStartsAt} onChange={(e) => setForm((f) => ({ ...f, eventStartsAt: e.target.value }))} error={show('eventStartsAt')} hint="بتوقيت القاهرة" />
               <Input label="موعد النهاية" type="datetime-local" value={form.eventEndsAt} min={form.eventStartsAt} onChange={(e) => setForm((f) => ({ ...f, eventEndsAt: e.target.value }))} error={show('eventEndsAt')} hint="اختياري" />
+              {form.eventStartsAt && !Number.isNaN(new Date(form.eventStartsAt).getTime()) && (
+                <p className="rounded-xl bg-sand px-4 py-2.5 text-sm font-bold text-ink-700 sm:col-span-2">
+                  تُحسب هذه الفعالية ضمن {periodLabel(currentAcademicYear(new Date(form.eventStartsAt)), currentTerm(new Date(form.eventStartsAt)))}. يمكنك تكرارها في مواعيد أخرى بعد الحفظ.
+                </p>
+              )}
               <div className="sm:col-span-2">
                 <Input label="المكان" maxLength={200} value={form.location} onChange={(e) => setForm((f) => ({ ...f, location: e.target.value }))} placeholder="مثال: قاعة المؤتمرات — المبنى الإداري" />
               </div>
@@ -371,6 +415,7 @@ function PostForm({ post }: { post: PostDetail | null }) {
           <Button variant="outline" onClick={() => submit('Draft')()} loading={save.isPending && save.variables === 'Draft'} disabled={save.isPending}>
             {post?.status === 'Published' ? 'إلغاء النشر (مسودة)' : 'حفظ كمسودة'}
           </Button>
+          {post && isEvent && post.eventStartsAt && <RepeatEvent post={post} />}
           <LinkButton to="/admin/posts" variant="ghost">إلغاء</LinkButton>
           {save.isPending && added.length > 0 && <span className="text-sm text-ink-500">جارٍ رفع الصور…</span>}
         </div>
@@ -403,7 +448,25 @@ export function AdminResources() {
 
   return (
     <>
-      <AdminTitle title="الجداول والمحاضرات" subtitle="محتوى الكلية الأكاديمي: جداول، امتحانات، محاضرات وملفات." action={<LinkButton to="/admin/resources/new"><Plus className="size-4" /> إضافة محتوى</LinkButton>} />
+      <AdminTitle title="الجداول والمحاضرات" subtitle="محتوى الكلية الأكاديمي: جداول، امتحانات، محاضرات وملفات." action={
+        <div className="flex flex-wrap gap-2">
+          <ReportActions fileName="الجداول-والمحاضرات" build={async () => {
+            const items = await fetchAllPages<Resource>('/api/admin/resources', { category: params.category, collegeId: params.collegeId });
+            return {
+              title: 'الجداول والمحاضرات',
+              subtitle: [params.category && CATEGORY_LABELS[params.category as ResourceCategory], colleges.data?.find((c) => String(c.id) === params.collegeId)?.name].filter(Boolean).join(' — '),
+              sections: [{
+                columns: ['العنوان', 'النوع', 'الكلية', 'المستوى', 'القسم', 'المقرر', 'العام الجامعي', 'الفصل', 'الموعد', 'الحالة'],
+                rows: items.map((r) => [
+                  r.title, CATEGORY_LABELS[r.category], r.collegeName, levelLabel(r.level, colleges.data?.find((c) => c.id === r.collegeId)?.studySystem),
+                  r.department, r.courseName, r.academicYear ? academicYearLabel(r.academicYear) : '', r.term ? TERMS[r.term] : '',
+                  r.dueAt ? formatDateTime(r.dueAt) : '', r.isPublished ? 'منشور' : 'مخفي',
+                ]),
+              }],
+            };
+          }} />
+          <LinkButton to="/admin/resources/new"><Plus className="size-4" /> إضافة محتوى</LinkButton>
+        </div>} />
       <div className="mb-4 flex flex-wrap gap-2">
         <FilterSelect label="النوع" value={params.category} onChange={(v) => set({ category: v })}>
           <option value="">كل الأنواع</option>

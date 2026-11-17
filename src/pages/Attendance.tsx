@@ -5,9 +5,10 @@ import { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { FlagName } from '../components/FlagName';
 import { Link, useParams } from 'react-router-dom';
+import { ReportActions, type ReportDoc } from '../components/ReportActions';
 import { Alert, Badge, Button, Card, EmptyState, ErrorState, Input, LinkButton, PageLoader } from '../components/ui';
 import { api, type ApiError } from '../lib/api';
-import { formatDateTime, formatNumber, formatTime } from '../lib/format';
+import { TERMS, academicYearLabel, formatDateTime, formatNumber, formatTime } from '../lib/format';
 import type { Attendees, CheckInResult, PostDetail } from '../lib/types';
 import { AdminTitle } from './admin/AdminLayout';
 
@@ -210,6 +211,11 @@ export function AdminAttendees() {
     <>
       <Link to="/admin/posts" className="mb-2 flex items-center gap-1 text-sm font-bold text-ink-500 hover:text-brand-700"><ArrowRight className="size-4" /> رجوع للقائمة</Link>
       <AdminTitle title="الحضور والكارنيهات" subtitle={post.data?.title} />
+      {post.data?.academicYear ? (
+        <p className="-mt-2 mb-3 text-sm font-bold text-ink-600">
+          {formatDateTime(post.data.eventStartsAt!)} · العام الجامعي {academicYearLabel(post.data.academicYear)}{post.data.term ? ` · ${TERMS[post.data.term]}` : ''}
+        </p>
+      ) : null}
 
       <div className="grid grid-cols-2 gap-3">
         <Card className="p-4"><p className="text-3xl font-black">{formatNumber(data.total)}</p><p className="text-sm font-bold text-ink-500">في القائمة</p></Card>
@@ -271,11 +277,26 @@ export function AdminAttendees() {
 
       <div className="mb-2 mt-6 flex flex-wrap items-center justify-between gap-2">
         <h2 className="text-lg font-extrabold">القائمة</h2>
-        {present.length > 0 && (
-          <Button variant="outline" size="sm" onClick={() => setPrinting(present)}>
-            <Printer className="size-4" /> طباعة كل الكارنيهات ({formatNumber(present.length)})
-          </Button>
-        )}
+        <div className="flex flex-wrap gap-2">
+          {data.items.length > 0 && <ReportActions build={async (): Promise<ReportDoc> => ({
+            title: `كشف حضور: ${post.data?.title ?? 'فعالية'}`,
+            subtitle: [
+              post.data?.eventStartsAt ? formatDateTime(post.data.eventStartsAt) : null,
+              post.data?.academicYear ? `العام الجامعي ${academicYearLabel(post.data.academicYear)}${post.data.term ? ` — ${TERMS[post.data.term]}` : ''}` : null,
+              post.data?.location,
+              `الحاضرون ${data.checkedIn} من ${data.total}`,
+            ].filter(Boolean).join(' — '),
+            sections: [{
+              columns: ['الاسم', 'رقم العضوية', 'الكلية', 'سجّل في', 'وقت الحضور', 'رقم الكارنيه'],
+              rows: data.items.map((i) => [i.fullName, i.membershipNumber ?? 'ليس عضواً', i.collegeName, formatDateTime(i.registeredAt), i.checkedInAt ? formatDateTime(i.checkedInAt) : 'لم يحضر', i.badgeNumber]),
+            }],
+          })} fileName={`كشف-حضور-${post.data?.title ?? id}`} />}
+          {present.length > 0 && (
+            <Button variant="outline" size="sm" onClick={() => setPrinting(present)}>
+              <Printer className="size-4" /> طباعة كل الكارنيهات ({formatNumber(present.length)})
+            </Button>
+          )}
+        </div>
       </div>
       {data.items.length === 0 ? (
         <EmptyState title="لم يسجّل أحد حضوره بعد" text="سيظهر هنا كل عضو يُمسح كارنيهه عند الدخول." />

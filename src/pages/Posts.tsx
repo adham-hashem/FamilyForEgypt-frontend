@@ -8,7 +8,7 @@ import { AdSlot } from '../components/AdSlot';
 import { CoverFallback, PostGrid, PostGridSkeleton } from '../components/PostCard';
 import { Badge, EmptyState, ErrorState, LinkButton, PageLoader, Pagination, cx } from '../components/ui';
 import { api, mediaUrl, toQuery, type ApiError } from '../lib/api';
-import { POST_TYPE_LABELS, formatDate, formatDateTime, formatNumber, formatTime } from '../lib/format';
+import { POST_TYPE_LABELS, TERMS, formatDate, formatDateTime, formatNumber, formatTime, periodLabel } from '../lib/format';
 import type { College, Paged, PostDetail, PostListItem } from '../lib/types';
 
 const VIEWS = [
@@ -263,6 +263,7 @@ export function PostDetailPage() {
                   <p className="text-xs font-bold text-ink-500">الموعد</p>
                   <p className="font-extrabold">{formatDateTime(post.eventStartsAt)}</p>
                   {post.eventEndsAt && <p className="text-sm text-ink-600">حتى {formatTime(post.eventEndsAt)}</p>}
+                  {post.academicYear ? <p className="mt-0.5 text-xs font-bold text-ink-500">{periodLabel(post.academicYear, post.term)}</p> : null}
                 </div>
               </div>
               {post.location && (
@@ -275,6 +276,25 @@ export function PostDetailPage() {
                 </div>
               )}
             </div>
+          )}
+
+          {isEvent && post.series && post.series.length > 1 && (
+            <section className="mt-6 rounded-2xl border border-ink-200 p-5" aria-label="مواعيد هذه الفعالية">
+              <h2 className="mb-1 text-lg font-extrabold">فعالية متكررة</h2>
+              <p className="mb-3 text-sm text-ink-600">تقام هذه الفعالية في أكثر من موعد خلال العام الجامعي.</p>
+              <ul className="grid gap-1.5">
+                {post.series.map((o) => (
+                  <li key={o.id}>
+                    <Link to={`/activities/${o.id}`} className={cx('flex flex-wrap items-center gap-2 rounded-xl border px-3 py-2 text-sm font-bold hover:border-brand-400', o.id === post.id ? 'border-brand-600 bg-brand-50' : 'border-ink-200')}>
+                      <span className="flex-1">{o.startsAt ? formatDateTime(o.startsAt) : '—'}</span>
+                      {o.term ? <Badge>{TERMS[o.term]}</Badge> : null}
+                      {o.status === 'Draft' && <Badge tone="amber">مسودة</Badge>}
+                      {o.id === post.id && <Badge tone="brand">هذا الموعد</Badge>}
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            </section>
           )}
 
           {isEvent && post.attendeesCount > 0 && (

@@ -195,6 +195,10 @@ export const currentTerm = (now = new Date()) => {
   return month >= 9 || month === 1 ? 1 : month <= 6 ? 2 : 3;
 };
 
+/** «العام الجامعي 2026/2027 — الفصل الأول». The term is left out when the whole year is meant. */
+export const periodLabel = (year: number, term?: number | null) =>
+  `العام الجامعي ${academicYearLabel(year)}${term ? ` — ${TERMS[term]}` : ''}`;
+
 /** Shown left to right whatever the page direction, so it always reads 2026/2027. */
 export const academicYearLabel = (year: number) => `⁦${year}/${year + 1}⁩`;
 

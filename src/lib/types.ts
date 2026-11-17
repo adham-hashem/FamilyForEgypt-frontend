@@ -47,6 +47,8 @@ export interface College {
   studySystemId: number;
   /** How the college counts its study; decides what a level is called (المستوى or المستوى…). */
   studySystem: StudySystem | null;
+  /** What this college calls a level when it differs from its study system (null = the system's word). */
+  levelWord?: string | null;
 }
 
 export interface CollegeDetail {
@@ -485,4 +487,5 @@ export interface CompetitionEntry {
   createdAt: string;
 }
 
+export interface DepartmentKind { id: number; name: string; sortOrder: number; isBuiltIn: boolean }
 export interface Department { id: number; collegeId: number; name: string; kind: number; sortOrder: number }

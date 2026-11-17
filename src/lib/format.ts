@@ -140,7 +140,6 @@ export const COURSE_KIND_LABELS: Record<number, string> = {
   0: 'غير محدد', 1: 'إجباري', 2: 'اختياري', 3: 'متطلب جامعة', 4: 'متطلب كلية',
 };
 export const COURSE_LANGUAGES = ['العربية', 'English', 'Français'];
-export const DEPARTMENT_KIND_LABELS: Record<number, string> = { 1: 'قسم', 2: 'شعبة', 3: 'برنامج' };
 
 /** Departments, divisions or programs commonly found in a college of this kind, for the leader to pick from in one tap. */
 export function departmentSuggestions(collegeName: string): { name: string; kind: number }[] {

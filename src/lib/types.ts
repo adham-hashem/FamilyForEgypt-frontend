@@ -81,6 +81,18 @@ export interface PostListItem {
   term?: number | null;
 }
 
+export interface PointsResult {
+  fullName: string;
+  isMember: boolean;
+  membershipNumber: string | null;
+  collegeName: string | null;
+  total: number;
+  attendancePoints: number;
+  competitionPoints: number;
+  events: { title: string; startsAt: string; checkedInAt: string; points: number }[];
+  competitions: { title: string; enteredAt: string; resultsPublished: boolean; isCorrect: boolean | null; score: number | null; isWinner: boolean; rank: number | null; points: number }[];
+}
+
 export interface SeriesOccurrence {
   id: number;
   startsAt: string | null;

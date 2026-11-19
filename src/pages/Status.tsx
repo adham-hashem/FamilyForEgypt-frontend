@@ -53,6 +53,7 @@ function Result({ data }: { data: ApplicationStatusView }) {
         {(data.status === 'NeedsChanges' || data.status === 'Rejected') && (
           <Button className="mt-5" onClick={() => navigate('/join', { state: { resubmit: data } })}>تعديل البيانات وإعادة الإرسال</Button>
         )}
+        {data.status === 'Approved' && <LinkButton to="/points" variant="outline" size="sm" className="mt-4">اعرف نقاطي</LinkButton>}
         <p className="mt-4 text-xs text-ink-500">بيانات التواصل والعنوان لا تظهر هنا لحمايتك. لتعديلها تواصل مع مسؤولي الأسرة في كليتك.</p>
       </Card>
 

@@ -187,7 +187,7 @@ export function AdminAttendanceReport() {
           {ranked.length > 0 && (
             <div className="mb-6 grid gap-4 lg:grid-cols-2">
               <Card className="p-5">
-                <h2 className="mb-3 text-lg font-extrabold">لوحة الشرف <span className="text-sm font-semibold text-ink-500">(كل حضور = {POINTS_PER_EVENT} نقاط)</span></h2>
+                <h2 className="mb-3 text-lg font-extrabold">لوحة الشرف <span className="text-sm font-semibold text-ink-500">(نقاط الحضور: كل حضور = {POINTS_PER_EVENT} نقاط)</span></h2>
                 <ol className="grid gap-1.5">
                   {ranked.slice(0, 10).map((m, i) => (
                     <li key={m.memberId} className="flex items-center gap-3 rounded-xl bg-ink-50 px-3 py-2">

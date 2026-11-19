@@ -125,6 +125,7 @@ export function Footer() {
               <li key={item.to}><Link to={item.to} className="hover:text-white">{item.label}</Link></li>
             ))}
             <li><Link to="/status" className="hover:text-white">متابعة طلب الانضمام</Link></li>
+            <li><Link to="/points" className="hover:text-white">نقاطي</Link></li>
             <li><Link to="/feedback" className="hover:text-white">اقتراحات وشكاوى</Link></li>
             <li><Link to="/advertise" className="hover:text-white">أعلن معنا</Link></li>
             <li><Link to="/login" className="hover:text-white">دخول المسؤولين</Link></li>

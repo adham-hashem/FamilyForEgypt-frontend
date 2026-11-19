@@ -17,6 +17,7 @@ const Colleges = lazy(() => import('./pages/Colleges'));
 const CollegeDetail = lazy(() => import('./pages/Colleges').then((m) => ({ default: m.CollegeDetailPage })));
 const Join = lazy(() => import('./pages/Join'));
 const Status = lazy(() => import('./pages/Status'));
+const Points = lazy(() => import('./pages/Points'));
 const Feedback = lazy(() => import('./pages/Feedback'));
 const Education = lazy(() => import('./pages/Education'));
 const Advertise = lazy(() => import('./pages/Advertise'));
@@ -128,6 +129,7 @@ const router = createBrowserRouter([
           { path: 'join', element: <Join /> },
           { path: 'login', element: <Login /> },
           { path: 'status', element: <Status /> },
+          { path: 'points', element: <Points /> },
           { path: 'feedback', element: <Feedback /> },
           { path: 'education', element: <Education /> },
           { path: 'advertise', element: <Advertise /> },

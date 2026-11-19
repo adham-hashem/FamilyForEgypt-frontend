@@ -116,6 +116,9 @@ export interface PostDetail extends Omit<PostListItem, 'summary' | 'coverUrl' | 
   isAttending: boolean;
   checkedIn: boolean;
   series?: SeriesOccurrence[] | null;
+  /** How many people the event takes (null = no limit), and how many registered so far. */
+  capacity?: number | null;
+  registered?: number;
 }
 
 export interface ResourceFile {
@@ -190,6 +193,8 @@ export interface ApplicationStatusView {
   memberCode: string | null;
   /** Opens the student's photo for about half an hour. */
   photoToken: string | null;
+  /** The academic year the membership is valid for (2026 is 2026/2027). */
+  validYear?: number | null;
 }
 
 export interface ApplicationListItem {
@@ -203,9 +208,11 @@ export interface ApplicationListItem {
   status: ApplicationStatus;
   createdAt: string;
   updatedAt: string;
+  validYear?: number | null;
 }
 
 export interface ApplicationDetail {
+  validYear?: number | null;
   id: number;
   status: ApplicationStatus;
   reviewNote: string | null;

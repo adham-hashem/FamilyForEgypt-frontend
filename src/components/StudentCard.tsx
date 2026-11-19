@@ -4,7 +4,7 @@ import QRCode from 'qrcode';
 import { useEffect, useState, type CSSProperties } from 'react';
 import { createPortal } from 'react-dom';
 import { api, fetchBlobUrl } from '../lib/api';
-import { levelLabel } from '../lib/format';
+import { currentAcademicYear, levelLabel } from '../lib/format';
 import { FlagName } from './FlagName';
 import { Button } from './ui';
 import './student-card.css';
@@ -16,6 +16,8 @@ export interface CardStudent {
   level: number;
   studentCode: string;
   membershipNumber: string | null;
+  /** The academic year the membership is valid for; the current year when unknown. */
+  validYear?: number | null;
 }
 
 /** The academic year runs from September: in November 2026 it is "2026 / 2027". */
@@ -38,7 +40,7 @@ function Value({ text, fitsChars }: { text: string; fitsChars: number }) {
 
 /** Both sides of the card. photo and qr are image URLs; either may be missing. */
 export function StudentIdCard({ student, photo, qr }: { student: CardStudent; photo?: string | null; qr?: string | null }) {
-  const year = academicYear();
+  const year = student.validYear ? `${student.validYear} / ${student.validYear + 1}` : academicYear();
   const department = student.department?.trim() || '—';
 
   return (
@@ -167,8 +169,15 @@ export function StudentCardPanel({ student, photoPath = null, photoSrc = null, c
     };
   }, [printing]);
 
+  const expired = !!student.validYear && student.validYear < currentAcademicYear();
+
   return (
     <div>
+      {expired && (
+        <p className="mb-4 rounded-xl border border-amber-200 bg-amber-50 p-3 text-sm font-bold text-amber-900">
+          هذه العضوية كانت للعام الجامعي {student.validYear} / {student.validYear! + 1}. يجدّدها رائد الأسرة للعام الحالي، وبعدها يظهر العام الجديد على الكارنيه.
+        </p>
+      )}
       <div className="@container">
         <div className="grid justify-items-center gap-5 @2xl:grid-cols-2">
           <StudentIdCard student={student} photo={photo} qr={qr} />

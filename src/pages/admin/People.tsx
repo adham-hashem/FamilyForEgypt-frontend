@@ -8,8 +8,9 @@ import {
 import { api, fetchBlobUrl, toQuery, type ApiError } from '../../lib/api';
 import { useAuth } from '../../lib/auth';
 import { ReportActions, fetchAllPages } from '../../components/ReportActions';
+import { ImportMembers, MessageMembers, RenewMembers } from '../../components/MemberTools';
 import { StudentCardPanel } from '../../components/StudentCard';
-import { COMMITTEES, GOVERNORATES, LEVELS, ROLE_HINTS, ROLE_LABELS, STATUS_LABELS, formatDate, levelLabel, normalizeDigits } from '../../lib/format';
+import { COMMITTEES, GOVERNORATES, LEVELS, ROLE_HINTS, ROLE_LABELS, STATUS_LABELS, currentAcademicYear, formatDate, levelLabel, normalizeDigits } from '../../lib/format';
 import type { AdminUser, ApplicationDetail, ApplicationListItem, ApplicationStatus, Paged, UserRole } from '../../lib/types';
 import { AdminTitle } from './AdminLayout';
 import { useManagedColleges } from './Content';
@@ -70,7 +71,11 @@ export function AdminApplications() {
   return (
     <>
       <AdminTitle title="طلبات العضوية" subtitle="راجع بيانات الطلاب وصور البطاقات ثم اقبل أو ارفض."
-        action={<ReportActions fileName={status === 'Approved' ? 'أعضاء-الأسرة' : 'طلبات-العضوية'} build={async () => {
+        action={<div className="flex flex-wrap gap-2">
+          <RenewMembers collegeId={collegeId} collegeName={colleges.data?.find((c) => String(c.id) === collegeId)?.name} />
+          <MessageMembers colleges={colleges.data} collegeId={collegeId} />
+          <ImportMembers />
+          <ReportActions fileName={status === 'Approved' ? 'أعضاء-الأسرة' : 'طلبات-العضوية'} build={async () => {
           const items = await fetchAllPages<ApplicationListItem>('/api/admin/applications', { status, collegeId, q });
           return {
             title: status === 'Approved' ? 'أعضاء الأسرة' : 'طلبات العضوية',
@@ -80,7 +85,8 @@ export function AdminApplications() {
               rows: items.map((a) => [a.fullName, a.studentCode, a.collegeName, levelLabel(a.level, colleges.data?.find((c) => c.id === a.collegeId)?.studySystem), a.phone, STATUS_LABELS[a.status], formatDate(a.createdAt)]),
             }],
           };
-        }} />} />
+        }} />
+        </div>} />
       <div className="mb-4 flex flex-wrap gap-2">
         <SearchBox value={term} onChange={setTerm} placeholder="ابحث بالاسم، الرقم الجامعي، الموبايل أو الرقم القومي كاملاً" />
         <select aria-label="الحالة" className={selectClass} value={status} onChange={(e) => set({ status: e.target.value })}>
@@ -114,6 +120,7 @@ export function AdminApplications() {
                 </div>
                 <div className="shrink-0 text-end">
                   <Badge tone={STATUS_TONE[item.status]}>{STATUS_LABELS[item.status]}</Badge>
+                  {item.status === 'Approved' && item.validYear && item.validYear < currentAcademicYear() && <span className="ms-1"><Badge tone="amber">تحتاج تجديد</Badge></span>}
                   <p className="mt-1 text-xs font-semibold text-ink-400">{formatDate(item.updatedAt)}</p>
                 </div>
               </Link>
@@ -351,7 +358,7 @@ export function ApplicationDetailPage() {
         <Card className="mt-5 p-5">
           <h2 className="text-lg font-extrabold">كارنيه العضو</h2>
           <p className="mb-5 mt-1 text-sm text-ink-600">جاهز للطباعة. الكود اللي على الظهر هو كود حضور العضو في الفعاليات.</p>
-          <StudentCardPanel student={data} photoPath={data.hasPhoto ? `${base}/photo` : null} codePath={`/api/admin/applications/${data.id}/card-code`} />
+          <StudentCardPanel student={{ ...data, validYear: data.validYear }} photoPath={data.hasPhoto ? `${base}/photo` : null} codePath={`/api/admin/applications/${data.id}/card-code`} />
         </Card>
       )}
 

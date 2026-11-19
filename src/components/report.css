@@ -113,3 +113,100 @@
     color: #5a524b;
   }
 }
+
+/* Certificates: one landscape A4 page each. */
+@media print {
+  @page certificate {
+    size: A4 landscape;
+    margin: 0;
+  }
+  .print-root.certificate-print {
+    display: block;
+    grid-template-columns: none;
+    color: #14110f;
+  }
+  .certificate {
+    page: certificate;
+    width: 297mm;
+    height: 210mm;
+    box-sizing: border-box;
+    padding: 10mm;
+    break-after: page;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+  .certificate:last-child {
+    break-after: auto;
+  }
+  .certificate-frame {
+    box-sizing: border-box;
+    height: 100%;
+    border: 1.2mm double #9f1d1d;
+    padding: 12mm 18mm;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    background: #fffdf9;
+  }
+  .certificate-logo {
+    width: 26mm;
+    height: 26mm;
+    object-fit: contain;
+  }
+  .certificate-org {
+    margin: 2mm 0 0;
+    font-size: 13pt;
+    font-weight: 700;
+    color: #5a524b;
+  }
+  .certificate h1 {
+    margin: 6mm 0 4mm;
+    font-size: 34pt;
+    font-weight: 900;
+    color: #9f1d1d;
+  }
+  .certificate-lead {
+    margin: 0;
+    font-size: 15pt;
+  }
+  .certificate-name {
+    margin: 4mm 0 1mm;
+    padding: 0 12mm 1.5mm;
+    font-size: 30pt;
+    font-weight: 900;
+    border-bottom: 0.5mm solid #c9a24b;
+  }
+  .certificate-line {
+    margin: 1mm 0 0;
+    font-size: 14pt;
+    font-weight: 700;
+    color: #5a524b;
+  }
+  .certificate-reason {
+    margin: 7mm 0 0;
+    max-width: 200mm;
+    font-size: 16pt;
+    line-height: 1.9;
+  }
+  .certificate-foot {
+    margin-top: auto;
+    width: 100%;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    font-size: 12pt;
+    font-weight: 700;
+  }
+  .certificate-foot > div {
+    width: 60mm;
+  }
+  .certificate-foot span {
+    display: block;
+    padding-top: 2mm;
+    border-top: 0.4mm solid #14110f;
+  }
+  .certificate-date {
+    color: #5a524b;
+  }
+}

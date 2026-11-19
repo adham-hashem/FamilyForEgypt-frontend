@@ -68,8 +68,8 @@ function ReportSheet({ doc }: { doc: ReportDoc }) {
  * Two buttons for any list: print it (the browser's print dialog also saves as PDF) or download it as an
  * Excel file. The data is built when a button is pressed, so a list can load every page of its rows first.
  */
-export function ReportActions({ build, fileName, disabled, size = 'sm' }: {
-  build: () => Promise<ReportDoc>; fileName: string; disabled?: boolean; size?: 'sm' | 'md';
+export function ReportActions({ build, fileName, disabled, size = 'sm', printLabel = 'طباعة / PDF', xlsxLabel = 'Excel' }: {
+  build: () => Promise<ReportDoc>; fileName: string; disabled?: boolean; size?: 'sm' | 'md'; printLabel?: string; xlsxLabel?: string;
 }) {
   const toast = useToast();
   const [busy, setBusy] = useState<'print' | 'xlsx' | null>(null);
@@ -108,10 +108,10 @@ export function ReportActions({ build, fileName, disabled, size = 'sm' }: {
     <>
       <div className="flex flex-wrap gap-2">
         <Button variant="outline" size={size} loading={busy === 'print'} disabled={disabled || busy !== null} onClick={() => void run('print')}>
-          <Printer className="size-4" /> طباعة / PDF
+          <Printer className="size-4" /> {printLabel}
         </Button>
         <Button variant="outline" size={size} loading={busy === 'xlsx'} disabled={disabled || busy !== null} onClick={() => void run('xlsx')}>
-          <FileSpreadsheet className="size-4" /> Excel
+          <FileSpreadsheet className="size-4" /> {xlsxLabel}
         </Button>
       </div>
       {doc && <ReportSheet doc={doc} />}

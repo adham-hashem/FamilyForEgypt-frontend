@@ -312,6 +312,7 @@ function PostForm({ post }: { post: PostDetail | null }) {
     eventStartsAt: toLocalInput(post?.eventStartsAt),
     eventEndsAt: toLocalInput(post?.eventEndsAt),
     location: post?.location ?? '',
+    capacity: post?.capacity ? String(post.capacity) : '',
   });
   const [existing, setExisting] = useState<PostImage[]>(post?.images ?? []);
   const [added, setAdded] = useState<NewImage[]>([]);
@@ -340,6 +341,7 @@ function PostForm({ post }: { post: PostDetail | null }) {
         body.append('eventStartsAt', fromLocalInput(form.eventStartsAt));
         if (form.eventEndsAt) body.append('eventEndsAt', fromLocalInput(form.eventEndsAt));
         body.append('location', form.location.trim());
+        if (form.capacity) body.append('capacity', form.capacity);
       }
       existing.forEach((image) => body.append('keepImageIds', String(image.id)));
       added.forEach((image) => body.append('images', image.file));
@@ -387,6 +389,7 @@ function PostForm({ post }: { post: PostDetail | null }) {
             <>
               <Input label="موعد البداية" type="datetime-local" required value={form.eventStartsAt} onChange={(e) => setForm((f) => ({ ...f, eventStartsAt: e.target.value }))} error={show('eventStartsAt')} hint="بتوقيت القاهرة" />
               <Input label="موعد النهاية" type="datetime-local" value={form.eventEndsAt} min={form.eventStartsAt} onChange={(e) => setForm((f) => ({ ...f, eventEndsAt: e.target.value }))} error={show('eventEndsAt')} hint="اختياري" />
+              <Input label="عدد الأماكن" type="number" min={1} max={100000} value={form.capacity} onChange={(e) => setForm((f) => ({ ...f, capacity: e.target.value }))} hint="اختياري. بعد اكتمال العدد يدخل من يسجّل قائمة الانتظار." />
               {form.eventStartsAt && !Number.isNaN(new Date(form.eventStartsAt).getTime()) && (
                 <p className="rounded-xl bg-sand px-4 py-2.5 text-sm font-bold text-ink-700 sm:col-span-2">
                   تُحسب هذه الفعالية ضمن {periodLabel(currentAcademicYear(new Date(form.eventStartsAt)), currentTerm(new Date(form.eventStartsAt)))}. يمكنك تكرارها في مواعيد أخرى بعد الحفظ.

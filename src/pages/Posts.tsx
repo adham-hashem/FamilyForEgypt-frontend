@@ -7,6 +7,7 @@ import { PageHeader } from '../components/Layout';
 import { AdSlot } from '../components/AdSlot';
 import { CoverFallback, PostGrid, PostGridSkeleton } from '../components/PostCard';
 import { Badge, EmptyState, ErrorState, LinkButton, PageLoader, Pagination, cx } from '../components/ui';
+import { EventRegistration } from '../components/EventRegistration';
 import { api, mediaUrl, toQuery, type ApiError } from '../lib/api';
 import { POST_TYPE_LABELS, TERMS, formatDate, formatDateTime, formatNumber, formatTime, periodLabel } from '../lib/format';
 import type { College, Paged, PostDetail, PostListItem } from '../lib/types';
@@ -277,6 +278,8 @@ export function PostDetailPage() {
               )}
             </div>
           )}
+
+          {isEvent && !ended && post.status === 'Published' && <EventRegistration post={post} />}
 
           {isEvent && post.series && post.series.length > 1 && (
             <section className="mt-6 rounded-2xl border border-ink-200 p-5" aria-label="مواعيد هذه الفعالية">

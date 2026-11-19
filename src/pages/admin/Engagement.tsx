@@ -19,6 +19,7 @@ import type {
   AdAdmin, AdPlacement, AdRequest, AdRequestStatus, Competition, CompetitionCategory, CompetitionEntry, CompetitionFormat,
   CompetitionListItem, CompetitionMode, Course, FeedbackItem, FeedbackKind, FeedbackStatus, FeedbackTopic, Paged,
 } from '../../lib/types';
+import { useCertificatePrinter } from '../../components/Certificates';
 import { ReportActions, fetchAllPages } from '../../components/ReportActions';
 import { DepartmentPicker, DepartmentsManager } from '../../components/Departments';
 import { AdminTitle } from './AdminLayout';
@@ -561,12 +562,26 @@ function EntryFileButton({ competitionId, entry }: { competitionId: number; entr
   return <Button variant="outline" size="sm" loading={loading} onClick={() => void open()}><Download className="size-4" /> {entry.fileName ?? 'الملف'}</Button>;
 }
 
+const RANK_WORDS = ['', 'الأول', 'الثاني', 'الثالث', 'الرابع', 'الخامس', 'السادس', 'السابع', 'الثامن', 'التاسع', 'العاشر'];
+
+/** The certificate of a competition winner: the rank when there is one, a plain «فائز» otherwise. */
+function winnerCertificate(entry: CompetitionEntry, competition: string) {
+  const place = entry.rank ? `المركز ${RANK_WORDS[entry.rank] ?? entry.rank}` : 'الفوز';
+  return {
+    title: 'شهادة تفوق',
+    name: entry.fullName,
+    line: entry.collegeName,
+    reason: `تقديراً لحصوله على ${place} في مسابقة «${competition}» التي نظمتها الأسرة، وتمنياتنا له بدوام التوفيق والتميز.`,
+  };
+}
+
 export function CompetitionEntriesPage() {
   const { id } = useParams();
   const queryClient = useQueryClient();
   const toast = useToast();
   const competition = useQuery({ queryKey: ['competition', id], queryFn: () => api<Competition>(`/api/competitions/${id}`) });
   const entries = useQuery({ queryKey: ['admin', 'entries', id], queryFn: () => api<CompetitionEntry[]>(`/api/admin/competitions/${id}/entries`) });
+  const certificates = useCertificatePrinter();
   const refresh = () => { void queryClient.invalidateQueries({ queryKey: ['admin', 'entries', id] }); void queryClient.invalidateQueries({ queryKey: ['competition', id] }); };
   const judge = useMutation({
     mutationFn: ({ entry, change }: { entry: CompetitionEntry; change: Partial<CompetitionEntry> }) => api(`/api/admin/competitions/${id}/entries/${entry.id}`, {
@@ -601,6 +616,11 @@ export function CompetitionEntriesPage() {
               ]),
             }],
           })} />
+          {winners > 0 && (
+            <Button variant="outline" onClick={() => certificates.print(entries.data.filter((e) => e.isWinner).sort((a, b) => (a.rank ?? 99) - (b.rank ?? 99)).map((e) => winnerCertificate(e, c.title)))}>
+              شهادات الفائزين ({formatNumber(winners)})
+            </Button>
+          )}
           {c.resultsPublished
             ? <Button variant="outline" loading={results.isPending} onClick={() => results.mutate(false)}>إخفاء النتائج</Button>
             : <Button variant="gold" loading={results.isPending} onClick={() => results.mutate(true)} disabled={winners === 0}><Trophy className="size-4" /> إعلان النتائج</Button>}
@@ -631,6 +651,7 @@ export function CompetitionEntriesPage() {
                     <Button size="sm" variant={entry.isCorrect === false ? 'danger' : 'ghost'} onClick={() => judge.mutate({ entry, change: { isCorrect: false } })}>خاطئة</Button>
                   </>
                 )}
+                {entry.isWinner && <Button size="sm" variant="ghost" onClick={() => certificates.print([winnerCertificate(entry, c.title)])}>شهادة</Button>}
                 <Checkbox checked={entry.isWinner} onChange={(e) => judge.mutate({ entry, change: { isWinner: e.target.checked, rank: e.target.checked ? entry.rank ?? winners + 1 : null } })} label="فائز" />
                 {entry.isWinner && (
                   <label className="flex items-center gap-2 text-sm font-bold">المركز
@@ -643,6 +664,7 @@ export function CompetitionEntriesPage() {
           ))}
         </div>
       )}
+      {certificates.sheet}
     </>
   );
 }

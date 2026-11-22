@@ -410,7 +410,7 @@ function PostForm({ post }: { post: PostDetail | null }) {
         </Card>
 
         <Card className="p-5 sm:p-6">
-          <ImagesField existing={existing} setExisting={setExisting} added={added} setAdded={setAdded} max={12} />
+          <ImagesField existing={existing} setExisting={setExisting} added={added} setAdded={setAdded} max={50} />
         </Card>
 
         <div className="sticky bottom-3 z-10 flex flex-wrap items-center gap-2 rounded-2xl border border-ink-200 bg-white/95 p-3 shadow-lift backdrop-blur">

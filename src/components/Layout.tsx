@@ -4,6 +4,7 @@ import { Link, NavLink, Outlet, ScrollRestoration, useLocation } from 'react-rou
 import { useAuth } from '../lib/auth';
 import { LinkButton, cx } from './ui';
 import { FlagName, withFlagName } from './FlagName';
+import { SocialIcons } from './SocialLinks';
 
 const NAV = [
   { to: '/', label: 'الرئيسية', end: true },
@@ -116,6 +117,7 @@ export function Footer() {
           <p className="mt-4 max-w-sm text-sm leading-7 text-ink-400">
             المنصة الرسمية للأسرة: أنشطة وفعاليات، صفحات الكليات، الجداول والمحاضرات، والتسجيل في عضوية الأسرة.
           </p>
+          <SocialIcons className="mt-4" />
         </div>
 
         <nav aria-label="روابط سريعة">

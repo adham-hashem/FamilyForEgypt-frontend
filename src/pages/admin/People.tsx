@@ -336,8 +336,9 @@ export function ApplicationDetailPage() {
           <Card className="p-5">
             <h2 className="mb-3 flex items-center gap-2 text-lg font-extrabold"><ShieldCheck className="size-5 text-emerald-600" /> صور البطاقة</h2>
             <div className="grid gap-4">
-              <SecureImage path={`${base}/front`} label="وجه البطاقة" />
-              <SecureImage path={`${base}/back`} label="ظهر البطاقة" />
+              {data.hasIdScans === false && <p className="text-sm text-ink-600">عضو أضافه أحد المسؤولين مباشرة، فلا توجد صور بطاقة.</p>}
+              {data.hasIdScans !== false && <SecureImage path={`${base}/front`} label="وجه البطاقة" />}
+              {data.hasIdScans !== false && <SecureImage path={`${base}/back`} label="ظهر البطاقة" />}
               {data.hasPhoto && <SecureImage path={`${base}/photo`} label="الصورة الشخصية" />}
             </div>
             <p className="mt-3 text-xs text-ink-500">بيانات سرّية. يُسجَّل كل اطلاع على هذا الطلب في سجل العمليات.</p>

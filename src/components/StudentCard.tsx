@@ -18,6 +18,8 @@ export interface CardStudent {
   membershipNumber: string | null;
   /** The academic year the membership is valid for; the current year when unknown. */
   validYear?: number | null;
+  /** For an administrator's card: their role («رائد الأسرة بالكلية»…). The card then reads as a staff card. */
+  staffRole?: string | null;
 }
 
 /** The academic year runs from September: in November 2026 it is "2026 / 2027". */
@@ -42,6 +44,7 @@ function Value({ text, fitsChars }: { text: string; fitsChars: number }) {
 export function StudentIdCard({ student, photo, qr }: { student: CardStudent; photo?: string | null; qr?: string | null }) {
   const year = student.validYear ? `${student.validYear} / ${student.validYear + 1}` : academicYear();
   const department = student.department?.trim() || '—';
+  const staff = !!student.staffRole;
 
   return (
     <>
@@ -51,7 +54,7 @@ export function StudentIdCard({ student, photo, qr }: { student: CardStudent; ph
             <img className="sid-logo" src="/brand/logo.webp" alt="شعار الأسرة" />
             <div className="sid-titles">
               <div className="sid-t1">أسرة طلاب <FlagName /></div>
-              <div className="sid-t2">جامعة دمياط · بطاقة عضوية طالب</div>
+              <div className="sid-t2">جامعة دمياط · {staff ? 'بطاقة عضوية مسؤول' : 'بطاقة عضوية طالب'}</div>
             </div>
             <div className="sid-uni"><img src="/brand/university.webp" alt="شعار جامعة دمياط" /></div>
           </div>
@@ -61,15 +64,19 @@ export function StudentIdCard({ student, photo, qr }: { student: CardStudent; ph
             <img className="sid-watermark" src="/brand/logo.webp" alt="" />
             <div>
               <div className="sid-badge-row">
-                <span className="sid-badge">عضو الأسرة</span>
+                <span className="sid-badge">{staff ? 'مسؤول بالأسرة' : 'عضو الأسرة'}</span>
                 <EgyptFlag />
               </div>
-              <div className="sid-field sid-name"><span className="sid-k">اسم الطالب</span><Value text={student.fullName} fitsChars={28} /></div>
-              <div className="sid-field"><span className="sid-k">الكلية</span><Value text={student.collegeName} fitsChars={36} /></div>
-              <div className="sid-pair">
-                <div className="sid-field"><span className="sid-k">القسم / الشعبة</span><Value text={department} fitsChars={17} /></div>
-                <div className="sid-field"><span className="sid-k">المستوى</span><Value text={levelLabel(student.level)} fitsChars={17} /></div>
-              </div>
+              <div className="sid-field sid-name"><span className="sid-k">{staff ? 'الاسم' : 'اسم الطالب'}</span><Value text={student.fullName} fitsChars={28} /></div>
+              <div className="sid-field"><span className="sid-k">{staff ? 'الجهة' : 'الكلية'}</span><Value text={student.collegeName} fitsChars={36} /></div>
+              {staff ? (
+                <div className="sid-field"><span className="sid-k">الصفة</span><Value text={student.staffRole!} fitsChars={30} /></div>
+              ) : (
+                <div className="sid-pair">
+                  <div className="sid-field"><span className="sid-k">القسم / الشعبة</span><Value text={department} fitsChars={17} /></div>
+                  <div className="sid-field"><span className="sid-k">المستوى</span><Value text={levelLabel(student.level)} fitsChars={17} /></div>
+                </div>
+              )}
             </div>
             <div className="sid-photo">
               <div className="sid-photo-in">
@@ -81,7 +88,7 @@ export function StudentIdCard({ student, photo, qr }: { student: CardStudent; ph
           </div>
 
           <div className="sid-idbar">
-            <span className="sid-idbar-k">ID الطالب</span>
+            <span className="sid-idbar-k">{staff ? 'رقم المسؤول' : 'ID الطالب'}</span>
             <span className="sid-idbar-v sid-ltr">{student.studentCode}</span>
             <span className="sid-idbar-y">العام الجامعي <span className="sid-ltr">{year}</span></span>
           </div>
@@ -97,14 +104,14 @@ export function StudentIdCard({ student, photo, qr }: { student: CardStudent; ph
               <h3>تعليمات البطاقة</h3>
               <ul>
                 <li>البطاقة شخصية، ولا يجوز استخدامها لغير صاحبها.</li>
-                <li>امسح الكود عند حضور فعاليات الأسرة لتسجيل حضورك.</li>
+                {staff ? <li>بطاقة تعريف بصفتك الإدارية في الأسرة، وتُبرز عند تنظيم الفعاليات.</li> : <li>امسح الكود عند حضور فعاليات الأسرة لتسجيل حضورك.</li>}
                 <li>صالحة للعام الجامعي <span className="sid-ltr">{year}</span> فقط.</li>
                 <li>عند العثور عليها تُسلَّم إلى الإدارة العامة لرعاية الطلاب — جامعة دمياط.</li>
               </ul>
             </div>
             <div className="sid-qr">
               {qr ? <img src={qr} alt="كود الحضور" /> : <div className="sid-qr-empty">كود الحضور</div>}
-              <div className="sid-qr-k">رقم العضوية</div>
+              <div className="sid-qr-k">{staff ? 'رقم المسؤول' : 'رقم العضوية'}</div>
               <div className="sid-qr-v sid-ltr">{student.membershipNumber ?? '—'}</div>
             </div>
           </div>

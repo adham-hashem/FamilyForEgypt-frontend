@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import {
-  BookOpen, Building2, ClipboardCheck, ClipboardList, FolderOpen, History, Home, Inbox, LayoutDashboard, Megaphone, MessagesSquare, Newspaper, Plus, ShieldCheck, Trophy, Users, type LucideIcon,
+  BookOpen, Building2, ClipboardCheck, ClipboardList, IdCard, FolderOpen, History, Home, Inbox, LayoutDashboard, Megaphone, MessagesSquare, Newspaper, Plus, ShieldCheck, Trophy, Users, type LucideIcon,
 } from 'lucide-react';
 import { Link, NavLink, Outlet } from 'react-router-dom';
 import { Card, ErrorState, LinkButton, cx } from '../../components/ui';
@@ -19,6 +19,7 @@ const NAV: NavItem[] = [
   { to: '/admin/resources', label: 'الجداول والمحاضرات', icon: FolderOpen, minimum: 'CollegeEditor' },
   { to: '/admin/competitions', label: 'المسابقات', icon: Trophy, minimum: 'CollegeEditor' },
   { to: '/admin/feedback', label: 'الاقتراحات والشكاوى', icon: MessagesSquare, minimum: 'CollegeAdmin' },
+  { to: '/admin/members', label: 'أعضاء الأسرة', icon: IdCard, minimum: 'CollegeAdmin' },
   { to: '/admin/applications', label: 'طلبات العضوية', icon: ClipboardList, minimum: 'CollegeAdmin' },
   { to: '/admin/users', label: 'المسؤولون والصلاحيات', icon: Users, minimum: 'CollegeAdmin' },
   { to: '/admin/colleges', label: 'الكليات', icon: Building2, minimum: 'CollegeAdmin' },
@@ -88,7 +89,7 @@ export function Dashboard() {
 
   const tiles = [
     { label: 'طلبات عضوية بانتظار المراجعة', value: data?.pendingApplications, to: '/admin/applications?status=Pending', show: hasRole('CollegeAdmin'), highlight: true },
-    { label: 'أعضاء مقبولون', value: data?.approvedMembers, to: '/admin/applications?status=Approved', show: hasRole('CollegeAdmin') },
+    { label: 'أعضاء مقبولون', value: data?.approvedMembers, to: '/admin/members', show: hasRole('CollegeAdmin') },
     { label: 'منشورات منشورة', value: data?.posts, to: '/admin/posts', show: true },
     { label: 'مسودات', value: data?.draftPosts, to: '/admin/posts?status=Draft', show: true },
     { label: 'جداول ومحاضرات', value: data?.resources, to: '/admin/resources', show: true },

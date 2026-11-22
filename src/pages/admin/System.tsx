@@ -11,6 +11,7 @@ import { SLOT_LABELS, formatDateTime, suggestedLevels } from '../../lib/format';
 import { ReportActions, fetchAllPages } from '../../components/ReportActions';
 import { StudySystemsManager, useStudySystems } from '../../components/StudySystems';
 import { DepartmentsManager } from '../../components/Departments';
+import { SocialLinksEditor } from '../../components/SocialLinks';
 import type { AuditLog, College, Leader, LeaderSlot, Paged } from '../../lib/types';
 import { ImagePicker } from '../Join';
 import { AdminTitle } from './AdminLayout';
@@ -286,6 +287,8 @@ export function AdminSite() {
           ))}
         </div>
       </Card>
+
+      <SocialLinksEditor />
 
       <Card className="mt-5 p-5 sm:p-6">
         <h2 className="mb-1 flex items-center gap-2 text-lg font-extrabold"><ImageIcon className="size-5 text-brand-600" /> الصورة العريضة تحت أول الصفحة</h2>

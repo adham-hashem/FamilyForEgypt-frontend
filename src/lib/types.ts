@@ -81,6 +81,8 @@ export interface PostListItem {
   term?: number | null;
 }
 
+export interface SocialLink { platform: string; url: string; label?: string | null }
+
 export interface PointsResult {
   fullName: string;
   isMember: boolean;
@@ -221,10 +223,14 @@ export interface ApplicationListItem {
   createdAt: string;
   updatedAt: string;
   validYear?: number | null;
+  membershipNumber?: string | null;
+  hasPhoto?: boolean;
 }
 
 export interface ApplicationDetail {
   validYear?: number | null;
+  /** False for members an administrator added directly: they have no ID scans to show. */
+  hasIdScans?: boolean;
   id: number;
   status: ApplicationStatus;
   reviewNote: string | null;
@@ -270,6 +276,7 @@ export interface AdminUser {
   createdAt: string;
   lastLoginAt: string | null;
   canManage: boolean;
+  hasPhoto?: boolean;
 }
 
 export interface AdminStats {
